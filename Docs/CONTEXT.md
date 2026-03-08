@@ -250,11 +250,11 @@ The following tasks are pending and should be the starting point in a new chat:
 
 1. ~~**Finalize open schema items**~~ ✅ Done - `updated_by` added, `profile_pic` and `icon` kept
 2. **Define API contracts** (endpoints documented per-feature as we build)
-3. **Set up project structure** (monorepo: `client/` + `server/` + `supabase/`)
-4. **Initialize projects** (Vite + React frontend, Express backend)
-5. **Set up Supabase** (create project, run SQL migrations)
+3. ~~**Set up project structure**~~ ✅ Done - monorepo: `client/` + `server/`
+4. ~~**Initialize projects**~~ ✅ Done - Vite + React (JS) + shadcn/ui frontend, Express (JS) backend
+5. ~~**Set up Supabase**~~ ✅ Done - project created, Google OAuth configured, `users` table migrated
 6. **Start building** - suggested order:
-   - Auth flow (Google OAuth)
+   - ~~Auth flow (Google OAuth)~~ ✅ Done & tested end-to-end (see Section 13.1)
    - Group CRUD + invite system
    - Transaction CRUD + distribution logic
    - Balance calculation
@@ -270,3 +270,109 @@ Start a new chat with a prompt like:
 > "Read the file at `C:\Users\91809\OneDrive\Desktop\split_project\Evenly\Docs\CONTEXT.md` to understand the full project context. Then read `PRD.md` and `Tables.md` in the same Docs folder. We're building Evenly - a Splitwise-like app. All planning is done. Let's start with [specific task]."
 
 This gives the new session complete context to continue without repeating discussions.
+
+---
+
+## 13. Feature Implementation Log
+
+### 13.1 Authentication (Google OAuth) - ✅ Completed
+
+**Date**: March 8, 2026
+
+#### What was built
+
+**Frontend (client/):**
+- `src/lib/supabase.js` - Supabase client initialized with project URL + anon key
+- `src/contexts/AuthContext.jsx` - Auth state management (user, session, loading). Provides `signInWithGoogle()` and `signOut()` functions. Listens to Supabase auth state changes.
+- `src/pages/LoginPage.jsx` - Google OAuth login button. Redirects to `/dashboard` if already logged in.
+- `src/pages/AuthCallbackPage.jsx` - Handles OAuth redirect. Exchanges PKCE code for session if present, then navigates to `/dashboard`. Critical: this page must exist at `/` so Supabase's redirect doesn't get caught by the catch-all route (which would strip auth tokens from the URL).
+- `src/pages/DashboardPage.jsx` - Placeholder dashboard. Shows logged-in user email/name + sign out button.
+- `src/components/ProtectedRoute.jsx` - Wrapper that redirects to `/login` if not authenticated.
+- `src/App.jsx` - Routes: `/login`, `/auth/callback`, `/` (AuthCallbackPage), `/dashboard` (protected), `*` → `/login`
+
+**Backend (server/):**
+- `src/config/supabase.js` - Two Supabase clients: `supabaseAdmin` (service_role key, bypasses RLS) and `supabase` (anon key, respects RLS)
+- `src/middleware/auth.js` - `authenticate` middleware: extracts Bearer token from Authorization header, verifies via `supabaseAdmin.auth.getUser()`, attaches user info to `req.user`
+- `src/routes/auth.js` - Two endpoints:
+  - `GET /api/auth/me` - Returns user profile from `users` table. Auto-creates user row on first login (syncs id, name, email, profile_pic from Google). Returns `is_new_user: true` for first-time users.
+  - `PATCH /api/auth/me` - Updates `name` and/or `default_currency`. Validates name (1-100 chars) and currency (3-letter code).
+
+**Database:**
+- `users` table created in Supabase (only this table for now, others added per-feature)
+
+#### Auth flow
+```
+1. User clicks "Continue with Google" on LoginPage
+2. Supabase Auth SDK redirects to Google OAuth consent
+3. Google redirects back to Supabase, which redirects to app origin (http://localhost:5173/)
+4. Route "/" renders AuthCallbackPage (NOT the catch-all, which would strip tokens)
+5. AuthCallbackPage exchanges PKCE code for session (if ?code= param present)
+6. Supabase Auth SDK stores session (JWT) in browser
+7. AuthContext picks up the session via onAuthStateChange
+8. AuthCallbackPage navigates to /dashboard
+9. Frontend sends JWT in Authorization header to backend API calls
+10. Backend middleware verifies JWT via supabaseAdmin.auth.getUser()
+11. AuthContext calls syncUserToBackend() → GET /api/auth/me creates user row on first login
+```
+
+#### OAuth Callback Bug Fix (March 8, 2026)
+**Problem**: After Google sign-in, Supabase redirected to `http://localhost:5173/`. The catch-all route `*` immediately did `<Navigate to="/login" replace />`, which stripped the auth tokens from the URL hash/query params before Supabase could read them. Result: user always landed back on login page with no session.
+
+**Fix**: Added a dedicated route for `/` that renders `AuthCallbackPage`. This page stays rendered long enough for Supabase to parse the tokens and establish a session, then navigates to `/dashboard`.
+
+**Also required**: Adding `http://localhost:5173/auth/callback` to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs.
+
+#### API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/auth/me` | Yes | Get/create user profile |
+| PATCH | `/api/auth/me` | Yes | Update name, currency |
+
+#### Environment variables
+- **client/.env**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- **server/.env**: `PORT`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
+
+#### Dependencies installed
+- **client**: `@supabase/supabase-js`, `react-router-dom`, `lucide-react`
+- **server**: `@supabase/supabase-js`, `pg`
+
+---
+
+### 13.2 Automated Database Migrations - ✅ Completed
+
+**Date**: March 8, 2026
+
+#### What was built
+
+- `server/src/db/database.js` - PostgreSQL connection pool using `pg` package. Connects via `DATABASE_URL` from `.env`.
+- `server/src/db/migrate.js` - Migration runner that:
+  1. Creates a `migrations` tracking table on first run
+  2. Reads `.sql` files from `server/src/db/migrations/` in alphabetical order
+  3. Skips already-executed migrations
+  4. Runs new migrations inside a transaction (rollback on failure)
+  5. Records each successful migration in the `migrations` table
+- `server/index.js` - Migrations run automatically on server startup, before the server starts listening
+
+#### How it works
+```
+Server starts → runMigrations() → reads migrations/ folder
+  → compares against migrations table → runs only new ones
+  → each in a transaction (BEGIN/COMMIT/ROLLBACK)
+  → server starts listening after all migrations pass
+```
+
+#### Migration files
+| File | Description |
+|------|-------------|
+| `001_users.sql` | Users table + updated_at trigger function |
+
+New tables are added as numbered `.sql` files (002_groups.sql, 003_user_groups.sql, etc.).
+
+#### For new developers
+1. Clone the repo
+2. Copy `.env.example` → `.env` in both `client/` and `server/`
+3. Fill in Supabase credentials
+4. Run `npm install` in both `client/` and `server/`
+5. Run `npm run dev` in `server/` — migrations run automatically
+6. Run `npm run dev` in `client/`
