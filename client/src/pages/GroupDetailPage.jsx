@@ -43,6 +43,7 @@ export default function GroupDetailPage() {
   const [copied, setCopied] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [memberError, setMemberError] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
 
   async function fetchData() {
     try {
@@ -186,7 +187,17 @@ export default function GroupDetailPage() {
 
           {/* Invite code + actions */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-muted-foreground">{group.invite_code}</span>
+            <span
+              className="text-xs font-mono text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              title="Click to copy code"
+              onClick={async () => {
+                await navigator.clipboard.writeText(group.invite_code);
+                setCodeCopied(true);
+                setTimeout(() => setCodeCopied(false), 2000);
+              }}
+            >
+              {codeCopied ? 'Copied!' : group.invite_code}
+            </span>
             <Button
               variant="outline"
               size="sm"
