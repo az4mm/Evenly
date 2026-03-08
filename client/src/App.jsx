@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AppLayout from '@/components/AppLayout';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import GroupDetailPage from '@/pages/GroupDetailPage';
@@ -18,7 +19,9 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <AppLayout>
+                  <DashboardPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -26,7 +29,9 @@ function App() {
             path="/groups/:id"
             element={
               <ProtectedRoute>
-                <GroupDetailPage />
+                <AppLayout>
+                  <GroupDetailPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -34,7 +39,9 @@ function App() {
             path="/join"
             element={
               <ProtectedRoute>
-                <JoinGroupPage />
+                <AppLayout>
+                  <JoinGroupPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />

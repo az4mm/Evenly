@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getGroup, getMembers, removeMember, updateMemberRole, deleteGroup } from '@/services/groups';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -29,6 +28,7 @@ import {
   Receipt,
   Scale,
   Activity,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 export default function GroupDetailPage() {
@@ -81,7 +81,7 @@ export default function GroupDetailPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback — select text approach ignored for now
+      // Fallback ignored
     }
   }
 
@@ -138,19 +138,27 @@ export default function GroupDetailPage() {
       .slice(0, 2);
   }
 
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading group...</p>
+      <div className="flex items-center justify-center py-32">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-sm">Loading group...</span>
+        </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-destructive">{error}</p>
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
         <Button variant="outline" onClick={() => navigate('/dashboard')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
         </Button>
       </div>
@@ -161,34 +169,80 @@ export default function GroupDetailPage() {
   const isCreator = group?.created_by === user?.id;
 
   return (
-    <div className="min-h-screen p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => navigate('/dashboard')}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{group.name}</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline">{group.currency}</Badge>
-                <Badge variant="secondary">
-                  {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+        {/* Back button */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to groups
+        </button>
+
+        {/* Group Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold tracking-tight">{group.name}</h1>
+              {/* Group actions dropdown */}
+              {(isAdmin || !isCreator) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<Button variant="ghost" size="icon-sm" />}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Group
+                      </DropdownMenuItem>
+                    )}
+                    {!isCreator && (
+                      <DropdownMenuItem onClick={handleLeave}>
+                        <UserMinus className="h-4 w-4 mr-2" />
+                        Leave Group
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={handleDeleteGroup}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Group
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="font-mono">
+                {group.currency}
+              </Badge>
+              <Badge variant="secondary">
+                <Users className="h-3 w-3 mr-1" />
+                {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+              </Badge>
+              {isAdmin && (
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/15">
+                  Admin
                 </Badge>
-                {isAdmin && <Badge>Admin</Badge>}
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Invite code + actions */}
-          <div className="flex items-center gap-2">
+          {/* Invite Code Box */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-primary/30 bg-primary/5">
+            <LinkIcon className="h-3.5 w-3.5 text-primary shrink-0" />
             <span
-              className="text-xs font-mono text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              className="text-sm font-mono font-medium text-primary cursor-pointer hover:text-primary/80 transition-colors"
               title="Click to copy code"
               onClick={async () => {
                 await navigator.clipboard.writeText(group.invite_code);
@@ -199,63 +253,23 @@ export default function GroupDetailPage() {
               {codeCopied ? 'Copied!' : group.invite_code}
             </span>
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="icon-sm"
+              className="h-7 w-7 text-primary hover:text-primary/80"
               onClick={handleCopyInvite}
+              title="Copy invite link"
             >
               {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 mr-1.5" />
-                  Copied!
-                </>
+                <Check className="h-3.5 w-3.5" />
               ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5 mr-1.5" />
-                  Copy Invite Link
-                </>
+                <Copy className="h-3.5 w-3.5" />
               )}
             </Button>
-
-            {/* Group-level actions */}
-            {(isAdmin || !isCreator) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={<Button variant="ghost" size="icon-sm" />}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isAdmin && (
-                    <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit Group
-                    </DropdownMenuItem>
-                  )}
-                  {!isCreator && (
-                    <DropdownMenuItem onClick={handleLeave}>
-                      <UserMinus className="h-4 w-4 mr-2" />
-                      Leave Group
-                    </DropdownMenuItem>
-                  )}
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={handleDeleteGroup}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Group
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
         </div>
 
-        <Separator />
+        {/* Divider */}
+        <div className="h-px bg-border" />
 
         {/* Tabs */}
         <Tabs defaultValue="members">
@@ -282,7 +296,9 @@ export default function GroupDetailPage() {
           <TabsContent value="members">
             <div className="space-y-2 mt-4">
               {memberError && (
-                <p className="text-sm text-destructive">{memberError}</p>
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                  <p className="text-sm text-destructive">{memberError}</p>
+                </div>
               )}
               {members.map((member) => {
                 const isMemberSelf = member.id === user?.id;
@@ -291,20 +307,22 @@ export default function GroupDetailPage() {
                 return (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border border-l-4 border-l-primary/30 p-3 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>
                         {member.profile_pic ? (
                           <AvatarImage src={member.profile_pic} alt={member.name} />
                         ) : null}
-                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {getInitials(member.name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
                           {member.name || member.email}
                           {isMemberSelf && (
-                            <span className="text-muted-foreground ml-1">(you)</span>
+                            <span className="text-muted-foreground ml-1 text-xs">(you)</span>
                           )}
                         </p>
                         <p className="text-xs text-muted-foreground">{member.email}</p>
@@ -316,7 +334,6 @@ export default function GroupDetailPage() {
                         {member.role === 'admin' ? 'Admin' : 'Member'}
                       </Badge>
 
-                      {/* Admin actions on other members (not on self, not on creator) */}
                       {isAdmin && !isMemberSelf && !isMemberCreator && (
                         <DropdownMenu>
                           <DropdownMenuTrigger
@@ -356,10 +373,12 @@ export default function GroupDetailPage() {
 
           {/* Expenses Tab (placeholder) */}
           <TabsContent value="expenses">
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Receipt className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No expenses yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+                <Receipt className="h-7 w-7 text-primary" />
+              </div>
+              <p className="font-medium mb-1">No expenses yet</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Expenses will appear here once the feature is built.
               </p>
             </div>
@@ -367,10 +386,12 @@ export default function GroupDetailPage() {
 
           {/* Balances Tab (placeholder) */}
           <TabsContent value="balances">
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Scale className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No balances to show</p>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+                <Scale className="h-7 w-7 text-primary" />
+              </div>
+              <p className="font-medium mb-1">No balances to show</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Balances will be calculated once expenses are added.
               </p>
             </div>
@@ -378,10 +399,12 @@ export default function GroupDetailPage() {
 
           {/* Activity Tab (placeholder) */}
           <TabsContent value="activity">
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Activity className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No activity yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+                <Activity className="h-7 w-7 text-primary" />
+              </div>
+              <p className="font-medium mb-1">No activity yet</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Group activity will be logged here.
               </p>
             </div>

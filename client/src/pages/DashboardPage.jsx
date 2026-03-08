@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGroups } from '@/services/groups';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
-import { Users, UserPlus, ArrowRight, LogOut } from 'lucide-react';
+import { Users, ArrowRight, Plus } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,97 +34,119 @@ export default function DashboardPage() {
   }, []);
 
   function handleGroupCreated() {
-    fetchGroups(); // Refresh the list
+    fetchGroups();
   }
 
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
+
   return (
-    <div className="min-h-screen p-4 sm:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Welcome, {user?.user_metadata?.full_name || user?.email}
+            <h1 className="text-3xl font-bold tracking-tight">
+              Hey, {firstName}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {groups.length > 0
+                ? `You're part of ${groups.length} group${groups.length === 1 ? '' : 's'}`
+                : 'Create or join a group to start splitting expenses'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <CreateGroupDialog onGroupCreated={handleGroupCreated} />
-            <Button variant="outline" onClick={() => navigate('/join')}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Join Group
-            </Button>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
+          <CreateGroupDialog onGroupCreated={handleGroupCreated} />
         </div>
 
-        {/* Groups section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Your Groups</h2>
+        {/* Divider */}
+        <div className="h-px bg-border" />
 
-          {loading && (
-            <p className="text-muted-foreground">Loading groups...</p>
-          )}
-
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-
-          {!loading && !error && groups.length === 0 && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-                <Users className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground mb-1">No groups yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Create a group to start splitting expenses, or{' '}
-                  <button
-                    onClick={() => navigate('/join')}
-                    className="underline underline-offset-3 hover:text-foreground"
-                  >
-                    join one with an invite code
-                  </button>.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {!loading && groups.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {groups.map((group) => (
-                <Card
-                  key={group.id}
-                  className="cursor-pointer transition-shadow hover:shadow-md"
-                  onClick={() => navigate(`/groups/${group.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle>{group.name}</CardTitle>
-                      <Badge variant="outline">{group.currency}</Badge>
-                    </div>
-                    <CardDescription>
-                      {group.my_role === 'admin' ? 'Admin' : 'Member'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="justify-between">
-                     <div className="flex items-center gap-3">
-                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                         <Users className="h-3 w-3" />
-                         {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-                       </span>
-                       <span className="text-xs text-muted-foreground">
-                         Created {new Date(group.created_at).toLocaleDateString()}
-                       </span>
-                     </div>
-                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </CardFooter>
-                </Card>
-              ))}
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span className="text-sm">Loading your groups...</span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && groups.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-5">
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No groups yet</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Groups let you track shared expenses with friends, roommates,
+              or travel buddies. Create one to get started, or join an
+              existing group with an invite code.
+            </p>
+            <div className="flex items-center gap-3">
+              <CreateGroupDialog onGroupCreated={handleGroupCreated} />
+              <button
+                onClick={() => navigate('/join')}
+                className="text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+              >
+                Join with code
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Group Cards */}
+        {!loading && groups.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {groups.map((group) => (
+              <Card
+                key={group.id}
+                className="group cursor-pointer border-l-4 border-l-primary/40 hover:border-l-primary transition-all duration-200 hover:shadow-lg hover:shadow-primary/5"
+                onClick={() => navigate(`/groups/${group.id}`)}
+              >
+                <CardContent className="p-5">
+                  {/* Top row: name + currency */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-base truncate">
+                        {group.name}
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        {group.my_role === 'admin' ? 'Admin' : 'Member'}
+                      </span>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 shrink-0 text-xs font-mono"
+                    >
+                      {group.currency}
+                    </Badge>
+                  </div>
+
+                  {/* Bottom row: meta + arrow */}
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {group.member_count}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(group.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
