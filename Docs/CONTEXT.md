@@ -560,3 +560,22 @@ server/src/
 - `previewGroup` — single query with subquery for count (was 2 separate queries)
 - Dynamic UPDATE queries use parameterized `$1, $2...` placeholders (SQL injection safe)
 - `member_count` from pg comes as string, explicitly parsed with `parseInt()`
+
+---
+
+### 13.5 Bug Fixes — Invite Code & Copy UX
+
+**Date**: 2026-03-09
+
+#### Fix 1: Invite code case sensitivity
+- **Problem**: `generateInviteCode()` used mixed-case charset (`A-Za-z0-9` = 62 chars), but the frontend `JoinGroupPage` input forces `toUpperCase()`. Any code containing lowercase letters could never be entered correctly.
+- **Fix**: Changed charset in `server/src/utils/inviteCode.js` to uppercase-only (`A-Z0-9` = 36 chars). Frontend already uppercases input, so they always match.
+- **Note**: Existing mixed-case codes in the database still work via the "Copy Invite Link" flow (URL preserves case). Only manually-typed codes were affected.
+
+#### Fix 2: Clickable invite code to copy raw code
+- **Problem**: `GroupDetailPage` showed invite code as plain text + a "Copy Invite Link" button (copies full URL). No way to copy just the raw 6-character code.
+- **Fix**: Made the invite code `<span>` clickable with `cursor-pointer`, `hover:text-foreground` styling, and a `title="Click to copy code"` tooltip. Clicking copies the raw code to clipboard and shows "Copied!" feedback for 2 seconds. Added separate `codeCopied` state to avoid conflict with the existing `copied` state (used by the link copy button).
+- **File**: `client/src/pages/GroupDetailPage.jsx`
+
+#### Issue 3: JoinGroupPage UI consistency — still pending
+- Waiting for user's UI design suggestions before making changes.
