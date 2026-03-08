@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 export function generateInviteCode(length = 6) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const bytes = crypto.randomBytes(length);
   let code = '';
   for (let i = 0; i < length; i++) {
