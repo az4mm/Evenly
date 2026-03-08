@@ -579,3 +579,106 @@ server/src/
 
 #### Issue 3: JoinGroupPage UI consistency — still pending
 - Waiting for user's UI design suggestions before making changes.
+
+---
+
+### 13.6 Mobile Responsiveness Fixes
+
+**Date**: 2026-03-09
+
+**Rule going forward**: All pages must be mobile-responsive. Use `flex-col sm:flex-row` stacking pattern for headers and action bars. Test layouts mentally at ~320px width.
+
+#### DashboardPage (`client/src/pages/DashboardPage.jsx`)
+- **Problem**: Header row had title + 3 buttons side-by-side. Overflows on mobile.
+- **Fix**: Changed header to `flex-col sm:flex-row` — title stacks above buttons on mobile, side-by-side on `sm+`. Buttons row uses `flex-wrap` for safety.
+
+#### GroupDetailPage (`client/src/pages/GroupDetailPage.jsx`)
+- **Problem**: Header row had group name/badges on left + invite code + "Copy Invite Link" button + dropdown on right. Severely overflows on mobile.
+- **Fix**:
+  - Header changed to `flex-col sm:flex-row` — group info stacks above invite/actions on mobile.
+  - Badges row uses `flex-wrap` for safety.
+  - Invite/actions row uses `flex-wrap`.
+  - "Copy Invite Link" button text hidden on mobile (`hidden sm:inline`), shows icon-only on small screens. Full text visible on `sm+`.
+
+#### Pages already mobile-safe (no changes needed)
+- `LoginPage` — centered content, `max-w-md`, padding.
+- `AuthCallbackPage` — centered loading text.
+- `JoinGroupPage` — centered card, `max-w-sm`, padding.
+
+### 13.7 UI Overhaul — Veirdo.in-Inspired Redesign
+
+**Date**: 2026-03-09
+
+**Inspiration**: Veirdo.in — bold, clean, modern e-commerce site with strong visual hierarchy, dark headers, and mobile-first design. Adapted for a dashboard/finance app.
+
+**Design decisions** (user-approved):
+- Metallic blue accent color palette using OKLCH color space
+- Dark sidebar (desktop) + bottom navigation bar (mobile) via AppLayout
+- Light content area, not full dark theme
+- Logo: "Evenly" text + Scissors icon
+- Dark/light theme toggle planned for future (CSS variables for `.dark` already defined)
+
+#### Files Created
+
+1. **`client/src/components/AppLayout.jsx`** — NEW
+   - Persistent app shell wrapping all protected routes
+   - Desktop: collapsible dark sidebar with Evenly logo, nav links (Dashboard, Join Group), user avatar, sign out button, collapse/expand toggle
+   - Mobile: fixed bottom navigation bar with icon+label nav items and profile/sign out button
+   - Sidebar uses `--sidebar-*` CSS variables for independent theming
+   - Collapse state: sidebar shrinks from `w-60` to `w-16`, labels hide, icons center
+
+#### Files Rewritten
+
+2. **`client/src/index.css`** — REWRITTEN
+   - Full metallic blue OKLCH theme for both `:root` (light) and `.dark` (dark)
+   - New sidebar-specific variables: `--sidebar-bg`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-border`, `--sidebar-ring`, `--sidebar-muted`
+   - `@theme inline` block maps sidebar variables to Tailwind utilities (`bg-sidebar-bg`, `text-sidebar-muted`, etc.)
+   - Key primary: `oklch(0.45 0.12 250)` (metallic blue)
+
+3. **`client/src/pages/LoginPage.jsx`** — REWRITTEN
+   - Dark hero section at top with large Evenly branding (Scissors icon + title + tagline)
+   - Overlapping white card below with Google OAuth sign-in button
+   - Removed any navigation elements (standalone page, not inside AppLayout)
+
+4. **`client/src/pages/DashboardPage.jsx`** — REWRITTEN
+   - Removed: inline "Welcome" header, "Sign Out" button, "Join Group" button (all now in AppLayout)
+   - Kept: `CreateGroupDialog` (page-specific action)
+   - New header: bold "Hey, {firstName}" greeting + dynamic subtitle (group count or prompt)
+   - Group cards: left blue accent border (`border-l-4 border-l-primary/40`), hover glow (`hover:shadow-primary/5`), arrow turns primary on hover
+   - Loading: primary-colored spinner; Error: styled destructive box; Empty state: primary-colored Users icon in rounded box
+   - Mobile-first responsive layout with `flex-col sm:flex-row`
+
+5. **`client/src/pages/GroupDetailPage.jsx`** — REWRITTEN
+   - Removed `<Separator>` component import, replaced with `h-px bg-border` divider
+   - Back button: text link "Back to groups" with hover-to-primary transition (not a Button)
+   - Header: bold 3xl title with inline dropdown menu for actions (edit, leave, delete)
+   - Invite code: styled box with dashed primary border, link icon, clickable code, ghost copy button
+   - Admin badge: custom primary styling (`bg-primary/10 text-primary`)
+   - Member cards: left primary accent border (`border-l-4 border-l-primary/30`), hover bg, avatar fallback with primary colors
+   - Placeholder tabs (Expenses, Balances, Activity): primary-colored icons in rounded boxes
+   - Loading/error states: consistent spinner and destructive box styling
+
+6. **`client/src/pages/JoinGroupPage.jsx`** — REWRITTEN
+   - No longer centered on page (sits in AppLayout content area)
+   - Back link: text "Back to groups" with primary hover
+   - Header: LinkIcon in primary rounded box + bold title + description
+   - Code input: larger (`text-2xl h-14`), dashed primary border, wider letter-spacing
+   - Full-width "Look Up Group" button with spinner state
+   - Preview card: left primary accent border, "Group Found" label, group name + currency + member count
+   - Side-by-side "Try Another" / "Join Group" buttons with spinner states
+
+#### Files Modified
+
+7. **`client/src/App.jsx`** — MODIFIED
+   - Protected routes (`/dashboard`, `/groups/:id`, `/join`) now wrapped in `<AppLayout>`
+   - Login and AuthCallback routes remain outside the layout
+
+#### Design Patterns Established
+- **Left accent border**: `border-l-4 border-l-primary/40` on interactive cards (groups, members, preview)
+- **Hover accent**: `hover:border-l-primary` + `hover:shadow-primary/5` on clickable cards
+- **Back navigation**: text link with ArrowLeft icon, `text-muted-foreground hover:text-primary`
+- **Page header**: `text-3xl font-bold tracking-tight` with muted subtitle below
+- **Loading spinner**: `h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent`
+- **Error box**: `rounded-lg border border-destructive/30 bg-destructive/5 p-3/p-4`
+- **Empty state**: primary-colored icon in `bg-primary/10` rounded box, centered with description
+- **No `min-h-screen`**: AppLayout handles viewport height; pages use `p-4 sm:p-8` padding only
