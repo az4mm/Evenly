@@ -108,7 +108,7 @@ Full SQL definitions are in `Tables.md`.
 - Soft delete for groups (is_deleted flag)
 
 ### Invite System
-- Permanent invite code auto-generated at group creation (8-char alphanumeric)
+- Permanent invite code auto-generated at group creation (6-char alphanumeric)
 - Code visible to ALL group members (not just admin)
 - Shareable link format: `{app_url}/join?code={invite_code}`
 - Link click → auto-join if authenticated, else login first then auto-join
@@ -255,7 +255,7 @@ The following tasks are pending and should be the starting point in a new chat:
 5. ~~**Set up Supabase**~~ ✅ Done - project created, Google OAuth configured, `users` table migrated
 6. **Start building** - suggested order:
    - ~~Auth flow (Google OAuth)~~ ✅ Done & tested end-to-end (see Section 13.1)
-   - Group CRUD + invite system
+   - ~~Group CRUD + invite system~~ ✅ Done (see Section 13.3)
    - Transaction CRUD + distribution logic
    - Balance calculation
    - Activity logging
@@ -376,3 +376,187 @@ New tables are added as numbered `.sql` files (002_groups.sql, 003_user_groups.s
 4. Run `npm install` in both `client/` and `server/`
 5. Run `npm run dev` in `server/` — migrations run automatically
 6. Run `npm run dev` in `client/`
+
+---
+
+### 13.3 Group CRUD + Invite System - ✅ Completed
+
+**Date**: March 8, 2026
+
+#### What was built
+
+**Backend (server/) — Steps 1-7:**
+
+1. `src/db/migrations/002_groups.sql` — Groups table (name, currency, invite_code, created_by, is_deleted, soft delete)
+2. `src/db/migrations/003_user_groups.sql` — User-groups junction table (user_id, group_id, role: admin/member, joined_at)
+3. `src/utils/inviteCode.js` — `generateInviteCode()` — 6-character alphanumeric code using `crypto.randomBytes`
+4. `src/middleware/group.js` — Two middleware functions:
+   - `requireGroupMember` — verifies user is a member of the group, attaches `req.membership`
+   - `requireGroupAdmin` — extends `requireGroupMember`, also checks `role === 'admin'`
+5. `src/routes/groups.js` — 9 endpoints (see API table below)
+6. Routes mounted in `server/index.js` at `/api/groups`
+7. `client/src/services/groups.js` — Frontend API service with 9 functions matching all backend endpoints
+
+**Frontend (client/) — Steps 8-12:**
+
+8. **shadcn components installed** — `dialog`, `input`, `label`, `card`, `tabs`, `badge`, `separator`, `avatar`, `dropdown-menu` (all using base-nova / @base-ui/react style)
+9. **CreateGroupDialog** (`src/components/CreateGroupDialog.jsx`) — Modal dialog with name + currency (select) fields. Calls `createGroup()`, notifies parent via `onGroupCreated` callback. Currencies: INR (default), USD, EUR, GBP, JPY, CAD, AUD.
+10. **DashboardPage** (`src/pages/DashboardPage.jsx`) — Responsive card grid (1/2/3 columns). Shows group cards with name, currency badge, role, creation date. Empty state with icon when no groups. "Create Group" button triggers the dialog. Sign Out button in header.
+11. **GroupDetailPage** (`src/pages/GroupDetailPage.jsx`) — Full group detail view with:
+    - Header: group name, currency badge, member count, admin badge, invite code copy button
+    - Group actions dropdown: Leave Group, Delete Group (admin only)
+    - 4 tabs (Members, Expenses, Balances, Activity)
+    - **Members tab** (functional): avatar + name + email, role badge, admin dropdown per member (promote/demote/remove). Respects rules: can't act on self, can't act on creator.
+    - **Expenses/Balances/Activity tabs**: placeholder UI with icons — ready for future features
+12. **JoinGroupPage** (`src/pages/JoinGroupPage.jsx`) — Card-centered layout with invite code input (monospace, uppercase, 6-char max). Supports pre-filling via `?code=` query param (for shareable links). On success, navigates to the group detail page.
+13. **App.jsx updated** — 3 new protected routes: `/groups/:id` → GroupDetailPage, `/join` → JoinGroupPage
+
+#### API Endpoints (9 total)
+
+| Method | Endpoint | Auth | Access | Description |
+|--------|----------|------|--------|-------------|
+| POST | `/api/groups` | Yes | Any user | Create group (name, currency) |
+| GET | `/api/groups` | Yes | Any user | List user's groups (with `my_role`) |
+| GET | `/api/groups/:id` | Yes | Members | Get group details + member_count |
+| PATCH | `/api/groups/:id` | Yes | Admin | Update name/currency |
+| DELETE | `/api/groups/:id` | Yes | Admin | Soft delete group |
+| GET | `/api/groups/:id/members` | Yes | Members | List members (with profile info) |
+| POST | `/api/groups/join` | Yes | Any user | Join via invite code |
+| DELETE | `/api/groups/:id/members/:userId` | Yes | Admin/Self | Remove member or leave |
+| PATCH | `/api/groups/:id/members/:userId` | Yes | Admin | Promote/demote role |
+
+#### Response format
+All endpoints return `{ success: boolean, data: ... }` on success and `{ success: false, error: { code, message } }` on failure.
+
+#### Frontend routes added
+
+| Path | Component | Protected | Description |
+|------|-----------|-----------|-------------|
+| `/groups/:id` | GroupDetailPage | Yes | Group detail with tabs |
+| `/join` | JoinGroupPage | Yes | Join group via invite code |
+| `/join?code=ABC123` | JoinGroupPage | Yes | Pre-filled invite code |
+
+#### Files created/modified
+- **New files**: `CreateGroupDialog.jsx`, `GroupDetailPage.jsx`, `JoinGroupPage.jsx`
+- **Modified files**: `DashboardPage.jsx` (complete rewrite), `App.jsx` (added routes)
+- **New shadcn components**: dialog, input, label, card, tabs, badge, separator, avatar, dropdown-menu
+
+#### TODOs in code
+- Balance checks in `DELETE /api/groups/:id` and `DELETE /api/groups/:id/members/:userId` are commented out with `TODO: Uncomment when balances feature is built`
+- Currency change check in `PATCH /api/groups/:id` queries `transactions` table (returns 0 if table doesn't exist yet, which is safe)
+- Expenses, Balances, Activity tabs are placeholder UI — will be implemented in their respective feature steps
+
+#### Post-Build Fixes (March 8, 2026)
+
+After initial build, a thorough audit identified issues across the Join Group flow and member management UX. All fixes have been implemented:
+
+**Join Group Flow Fixes (6 fixes):**
+
+1. **"Join Group" button on Dashboard** — Added `Join Group` button (with `UserPlus` icon) in the dashboard header next to "Create Group". Also added a clickable text link in the empty state ("join one with an invite code").
+
+2. **Group preview endpoint** — Created `GET /api/groups/preview/:code` (authenticated, any user). Returns `{ name, currency, member_count }` for a group by invite code without joining. Added `previewGroup(code)` to frontend service (`client/src/services/groups.js`).
+
+3. **Reworked JoinGroupPage** — Two-step flow: (1) enter invite code → (2) preview shows group name, currency, member count → confirm & join. Auto-previews when `?code=` query param is present in the URL.
+
+4. **Copy invite link** — Changed copy button behavior: copies full shareable link (`{origin}/join?code=ABC123`) instead of just the code. Raw code is still shown as text next to the button.
+
+5. **Return URL preserved across auth redirect** — `ProtectedRoute` passes `?redirect=` to login page. Before OAuth redirect, the redirect path is saved to `sessionStorage`. After login, `AuthCallbackPage` checks `sessionStorage` for a saved redirect and navigates there instead of always going to `/dashboard`.
+
+6. **EditGroupDialog** — Created `EditGroupDialog.jsx` as a controlled dialog (no trigger — avoids dropdown/dialog focus trap conflicts). Integrated into `GroupDetailPage` as an "Edit Group" dropdown item (admin only). Pre-fills current name/currency, only sends changed fields via `PATCH /api/groups/:id`.
+
+**Gap Fixes (3 fixes):**
+
+7. **Confirm before member removal (Gap 2)** — Added `if (!confirm('Are you sure you want to remove this member?')) return;` at the top of `handleRemoveMember()` in `GroupDetailPage.jsx`. (Leave and Delete already had confirms.)
+
+8. **Error feedback for member actions (Gap 3)** — Added `memberError` state to `GroupDetailPage`. `handlePromote`, `handleDemote`, and `handleRemoveMember` now set `memberError` on failure and clear it on success. Error message renders at the top of the Members tab.
+
+9. **Member count on dashboard cards (Gap 4)** — Updated `GET /api/groups` backend endpoint to fetch member count per group via `Promise.all` with individual count queries. Updated `DashboardPage.jsx` to show member count (with `Users` icon) in each group card footer.
+
+**Updated API Endpoints (10 total — 1 new):**
+
+| Method | Endpoint | Auth | Access | Description |
+|--------|----------|------|--------|-------------|
+| GET | `/api/groups/preview/:code` | Yes | Any user | Preview group by invite code (NEW) |
+
+**Files created:**
+- `client/src/components/EditGroupDialog.jsx`
+
+**Files modified:**
+- `client/src/pages/GroupDetailPage.jsx` — invite link copy, EditGroupDialog, confirm on remove, memberError feedback
+- `client/src/pages/DashboardPage.jsx` — Join Group button, empty state link, member count on cards
+- `client/src/pages/JoinGroupPage.jsx` — complete rewrite: two-step preview → join flow
+- `client/src/pages/AuthCallbackPage.jsx` — reads sessionStorage for redirect after login
+- `client/src/contexts/AuthContext.jsx` — saves redirect to sessionStorage before OAuth
+- `client/src/components/ProtectedRoute.jsx` — passes `?redirect=` param to login
+- `client/src/services/groups.js` — added `previewGroup(code)`
+- `server/src/routes/groups.js` — added preview endpoint, added member count to `GET /api/groups`
+
+---
+
+### 13.4 Backend Refactoring: Supabase SDK → PostgreSQL + Controllers - ✅ Completed
+
+**Date**: March 8, 2026
+
+#### Why
+
+The backend was using `supabaseAdmin.from(...)` (Supabase JS SDK / PostgREST) for all database operations. This was replaced with raw PostgreSQL queries via the `pg` Pool for several reasons:
+- Direct SQL gives more control and clarity
+- Removes dependency on Supabase PostgREST for DB access
+- Supabase SDK is now used **only** for Auth (JWT verification)
+- Better separation of concerns with controller pattern
+
+#### What changed
+
+**New files created:**
+- `server/src/controllers/authController.js` — `getMe()`, `updateMe()` handlers with pg queries
+- `server/src/controllers/groupController.js` — all 10 group handlers with pg queries: `createGroup`, `listGroups`, `getGroup`, `updateGroup`, `deleteGroup`, `listMembers`, `previewGroup`, `joinGroup`, `removeMember`, `updateMemberRole`
+
+**Files rewritten:**
+- `server/src/routes/auth.js` — slimmed to route definitions only (imports controller functions)
+- `server/src/routes/groups.js` — slimmed to route definitions only (imports controller functions)
+- `server/src/middleware/group.js` — converted from Supabase SDK to pg queries, added try/catch error handling
+- `server/src/config/supabase.js` — removed unused `supabase` (anon) client export. Only `supabaseAdmin` remains, used exclusively for Auth.
+
+**Files unchanged:**
+- `server/src/middleware/auth.js` — still uses `supabaseAdmin.auth.getUser()` (Supabase Auth SDK, intentionally kept)
+- `server/src/db/database.js` — pg Pool (already existed)
+- `server/src/db/migrate.js` — migration runner (already used pg)
+- `server/src/utils/inviteCode.js` — no Supabase usage
+- `server/index.js` — no changes needed
+
+#### Conversion stats
+- **26 Supabase DB queries** converted to raw PostgreSQL across 3 files
+- **1 Supabase Auth call** kept as-is (`auth.getUser()` in middleware/auth.js)
+- **0 remaining `supabaseAdmin.from()` calls** in the codebase
+
+#### New backend file structure
+```
+server/src/
+├── config/
+│   └── supabase.js              (Supabase Auth SDK only)
+├── controllers/
+│   ├── authController.js        (auth endpoint handlers)
+│   └── groupController.js       (group endpoint handlers)
+├── db/
+│   ├── database.js              (pg Pool)
+│   ├── migrate.js               (migration runner)
+│   └── migrations/
+│       ├── 001_users.sql
+│       ├── 002_groups.sql
+│       └── 003_user_groups.sql
+├── middleware/
+│   ├── auth.js                  (JWT verification via Supabase Auth)
+│   └── group.js                 (membership/admin checks via pg)
+├── routes/
+│   ├── auth.js                  (route definitions only)
+│   └── groups.js                (route definitions only)
+└── utils/
+    └── inviteCode.js            (invite code generator)
+```
+
+#### Key improvements in converted queries
+- `listGroups` — single SQL query with JOIN + subquery for member count (was N+1: one query + one count per group)
+- `getGroup` — single query with subquery for count (was 2 separate queries)
+- `previewGroup` — single query with subquery for count (was 2 separate queries)
+- Dynamic UPDATE queries use parameterized `$1, $2...` placeholders (SQL injection safe)
+- `member_count` from pg comes as string, explicitly parsed with `parseInt()`

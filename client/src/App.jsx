@@ -3,6 +3,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
+import GroupDetailPage from '@/pages/GroupDetailPage';
+import JoinGroupPage from '@/pages/JoinGroupPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
 
 function App() {
@@ -17,6 +19,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/groups/:id"
+            element={
+              <ProtectedRoute>
+                <GroupDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/join"
+            element={
+              <ProtectedRoute>
+                <JoinGroupPage />
               </ProtectedRoute>
             }
           />

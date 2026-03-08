@@ -50,6 +50,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    // Preserve redirect URL across the OAuth flow
+    // (Supabase OAuth redirects strip custom query params, so we use sessionStorage)
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    if (redirect) {
+      sessionStorage.setItem('postLoginRedirect', redirect);
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

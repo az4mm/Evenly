@@ -16,6 +16,12 @@ export default function AuthCallbackPage() {
 
   // Once loading is done, redirect based on auth state
   if (user) {
+    // Check if there's a saved redirect URL from before the OAuth flow
+    const redirect = sessionStorage.getItem('postLoginRedirect');
+    if (redirect) {
+      sessionStorage.removeItem('postLoginRedirect');
+      return <Navigate to={redirect} replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
