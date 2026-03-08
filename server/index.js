@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './src/routes/auth.js';
+import { runMigrations } from './src/db/migrate.js';
 
 dotenv.config();
 
@@ -14,6 +16,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.use('/api/auth', authRoutes);
+
+// Run migrations then start server
+runMigrations()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to run migrations. Server not started.', err);
+    process.exit(1);
+  });
