@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGroup, getMembers, removeMember, updateMemberRole, deleteGroup } from '@/services/groups';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -80,40 +78,29 @@ export default function GroupDetailPage() {
       await navigator.clipboard.writeText(shareableLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback ignored
-    }
+    } catch { /* noop */ }
   }
 
   async function handlePromote(memberId) {
     setMemberError('');
     const res = await updateMemberRole(id, memberId, 'admin');
-    if (res.success) {
-      fetchData();
-    } else {
-      setMemberError(res.error?.message || 'Failed to promote member');
-    }
+    if (res.success) fetchData();
+    else setMemberError(res.error?.message || 'Failed to promote member');
   }
 
   async function handleDemote(memberId) {
     setMemberError('');
     const res = await updateMemberRole(id, memberId, 'member');
-    if (res.success) {
-      fetchData();
-    } else {
-      setMemberError(res.error?.message || 'Failed to demote member');
-    }
+    if (res.success) fetchData();
+    else setMemberError(res.error?.message || 'Failed to demote member');
   }
 
   async function handleRemoveMember(memberId) {
     if (!confirm('Are you sure you want to remove this member?')) return;
     setMemberError('');
     const res = await removeMember(id, memberId);
-    if (res.success) {
-      fetchData();
-    } else {
-      setMemberError(res.error?.message || 'Failed to remove member');
-    }
+    if (res.success) fetchData();
+    else setMemberError(res.error?.message || 'Failed to remove member');
   }
 
   async function handleLeave() {
@@ -130,12 +117,7 @@ export default function GroupDetailPage() {
 
   function getInitials(name) {
     if (!name) return '?';
-    return name
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
   // Loading state
@@ -154,13 +136,15 @@ export default function GroupDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+        <div className="neu-inset rounded-2xl p-4">
           <p className="text-sm text-destructive">{error}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/dashboard')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="neu-button px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        </button>
       </div>
     );
   }
@@ -171,50 +155,48 @@ export default function GroupDetailPage() {
   return (
     <div className="p-4 sm:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
+
         {/* Back button */}
         <button
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+          className="neu-button h-10 w-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+          title="Back to dashboard"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to groups
+          <ArrowLeft className="h-5 w-5" />
         </button>
 
-        {/* Group Header */}
+        {/* ─── Group Header ─── */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className="text-3xl font-bold tracking-tight">{group.name}</h1>
-              {/* Group actions dropdown */}
+
+              {/* Actions dropdown */}
               {(isAdmin || !isCreator) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    render={<Button variant="ghost" size="icon-sm" />}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </DropdownMenuTrigger>
+                    render={
+                      <button className="neu-button h-8 w-8 rounded-lg flex items-center justify-center cursor-pointer">
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    }
+                  />
                   <DropdownMenuContent align="start">
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit Group
+                        <Pencil className="h-4 w-4 mr-2" /> Edit Group
                       </DropdownMenuItem>
                     )}
                     {!isCreator && (
                       <DropdownMenuItem onClick={handleLeave}>
-                        <UserMinus className="h-4 w-4 mr-2" />
-                        Leave Group
+                        <UserMinus className="h-4 w-4 mr-2" /> Leave Group
                       </DropdownMenuItem>
                     )}
                     {isAdmin && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={handleDeleteGroup}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Group
+                        <DropdownMenuItem variant="destructive" onClick={handleDeleteGroup}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Delete Group
                         </DropdownMenuItem>
                       </>
                     )}
@@ -222,27 +204,29 @@ export default function GroupDetailPage() {
                 </DropdownMenu>
               )}
             </div>
+
+            {/* Meta badges — neumorphic flat */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="font-mono">
+              <span className="neu-flat text-xs font-mono px-2.5 py-1 rounded-lg text-muted-foreground">
                 {group.currency}
-              </Badge>
-              <Badge variant="secondary">
-                <Users className="h-3 w-3 mr-1" />
+              </span>
+              <span className="neu-flat text-xs px-2.5 py-1 rounded-lg text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" />
                 {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
-              </Badge>
+              </span>
               {isAdmin && (
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/15">
+                <span className="neu-flat text-xs px-2.5 py-1 rounded-lg text-primary font-semibold">
                   Admin
-                </Badge>
+                </span>
               )}
             </div>
           </div>
 
-          {/* Invite Code Box */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-primary/30 bg-primary/5">
+          {/* ─── Invite Code Box ─── */}
+          <div className="neu-raised flex items-center gap-2.5 px-4 py-3 rounded-xl">
             <LinkIcon className="h-3.5 w-3.5 text-primary shrink-0" />
             <span
-              className="text-sm font-mono font-medium text-primary cursor-pointer hover:text-primary/80 transition-colors"
+              className="text-sm font-mono font-semibold text-primary cursor-pointer hover:text-primary/70 transition-colors select-all"
               title="Click to copy code"
               onClick={async () => {
                 await navigator.clipboard.writeText(group.invite_code);
@@ -252,114 +236,95 @@ export default function GroupDetailPage() {
             >
               {codeCopied ? 'Copied!' : group.invite_code}
             </span>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="h-7 w-7 text-primary hover:text-primary/80"
+            <button
+              className="neu-button h-7 w-7 rounded-lg flex items-center justify-center text-primary cursor-pointer"
               onClick={handleCopyInvite}
               title="Copy invite link"
             >
-              {copied ? (
-                <Check className="h-3.5 w-3.5" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-            </Button>
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-border" />
+        {/* Groove divider */}
+        <div className="neu-inset h-[3px] rounded-full" />
 
-        {/* Tabs */}
+        {/* ─── Tabs ─── */}
         <Tabs defaultValue="members">
           <TabsList>
             <TabsTrigger value="members">
-              <Users className="h-4 w-4" />
-              Members
+              <Users className="h-4 w-4" /> Members
             </TabsTrigger>
             <TabsTrigger value="expenses">
-              <Receipt className="h-4 w-4" />
-              Expenses
+              <Receipt className="h-4 w-4" /> Expenses
             </TabsTrigger>
             <TabsTrigger value="balances">
-              <Scale className="h-4 w-4" />
-              Balances
+              <Scale className="h-4 w-4" /> Balances
             </TabsTrigger>
             <TabsTrigger value="activity">
-              <Activity className="h-4 w-4" />
-              Activity
+              <Activity className="h-4 w-4" /> Activity
             </TabsTrigger>
           </TabsList>
 
           {/* Members Tab */}
           <TabsContent value="members">
-            <div className="space-y-2 mt-4">
+            <div className="space-y-3 mt-4">
               {memberError && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <div className="neu-inset rounded-xl p-3">
                   <p className="text-sm text-destructive">{memberError}</p>
                 </div>
               )}
               {members.map((member) => {
-                const isMemberSelf = member.id === user?.id;
+                const isSelf = member.id === user?.id;
                 const isMemberCreator = member.id === group.created_by;
 
                 return (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between rounded-lg border border-l-4 border-l-primary/30 p-3 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
+                  <div key={member.id} className="neu-raised flex items-center justify-between rounded-2xl p-4">
+                    <div className="flex items-center gap-3 min-w-0">
                       <Avatar>
-                        {member.profile_pic ? (
-                          <AvatarImage src={member.profile_pic} alt={member.name} />
-                        ) : null}
+                        {member.profile_pic && <AvatarImage src={member.profile_pic} alt={member.name} />}
                         <AvatarFallback className="bg-primary/10 text-primary text-sm">
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
                           {member.name || member.email}
-                          {isMemberSelf && (
-                            <span className="text-muted-foreground ml-1 text-xs">(you)</span>
-                          )}
+                          {isSelf && <span className="text-muted-foreground ml-1 text-xs">(you)</span>}
                         </p>
-                        <p className="text-xs text-muted-foreground">{member.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`neu-flat text-xs px-2.5 py-1 rounded-lg ${
+                        member.role === 'admin' ? 'text-primary font-semibold' : 'text-muted-foreground'
+                      }`}>
                         {member.role === 'admin' ? 'Admin' : 'Member'}
-                      </Badge>
+                      </span>
 
-                      {isAdmin && !isMemberSelf && !isMemberCreator && (
+                      {isAdmin && !isSelf && !isMemberCreator && (
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            render={<Button variant="ghost" size="icon-sm" />}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </DropdownMenuTrigger>
+                            render={
+                              <button className="neu-button h-7 w-7 rounded-lg flex items-center justify-center cursor-pointer">
+                                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                              </button>
+                            }
+                          />
                           <DropdownMenuContent align="end">
                             {member.role === 'member' ? (
                               <DropdownMenuItem onClick={() => handlePromote(member.id)}>
-                                <Shield className="h-4 w-4 mr-2" />
-                                Promote to Admin
+                                <Shield className="h-4 w-4 mr-2" /> Promote to Admin
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => handleDemote(member.id)}>
-                                <ShieldOff className="h-4 w-4 mr-2" />
-                                Demote to Member
+                                <ShieldOff className="h-4 w-4 mr-2" /> Demote to Member
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => handleRemoveMember(member.id)}
-                            >
-                              <UserMinus className="h-4 w-4 mr-2" />
-                              Remove from Group
+                            <DropdownMenuItem variant="destructive" onClick={() => handleRemoveMember(member.id)}>
+                              <UserMinus className="h-4 w-4 mr-2" /> Remove from Group
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -374,7 +339,7 @@ export default function GroupDetailPage() {
           {/* Expenses Tab (placeholder) */}
           <TabsContent value="expenses">
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+              <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
                 <Receipt className="h-7 w-7 text-primary" />
               </div>
               <p className="font-medium mb-1">No expenses yet</p>
@@ -387,7 +352,7 @@ export default function GroupDetailPage() {
           {/* Balances Tab (placeholder) */}
           <TabsContent value="balances">
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+              <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
                 <Scale className="h-7 w-7 text-primary" />
               </div>
               <p className="font-medium mb-1">No balances to show</p>
@@ -400,7 +365,7 @@ export default function GroupDetailPage() {
           {/* Activity Tab (placeholder) */}
           <TabsContent value="activity">
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+              <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
                 <Activity className="h-7 w-7 text-primary" />
               </div>
               <p className="font-medium mb-1">No activity yet</p>
@@ -412,7 +377,7 @@ export default function GroupDetailPage() {
         </Tabs>
       </div>
 
-      {/* Edit Group Dialog (admin only) */}
+      {/* Edit Group Dialog */}
       {isAdmin && group && (
         <EditGroupDialog
           group={group}

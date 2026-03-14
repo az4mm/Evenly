@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGroups } from '@/services/groups';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
-import { Users, ArrowRight, Plus } from 'lucide-react';
+import { Users, ArrowRight, Plus, FolderOpen } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -54,11 +52,18 @@ export default function DashboardPage() {
                 : 'Create or join a group to start splitting expenses'}
             </p>
           </div>
-          <CreateGroupDialog onGroupCreated={handleGroupCreated} />
+          <div className="flex items-center gap-2 flex-wrap">
+            <CreateGroupDialog onGroupCreated={handleGroupCreated}>
+              <button className="neu-button h-10 px-4 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+                <Plus className="h-4 w-4" />
+                Create Group
+              </button>
+            </CreateGroupDialog>
+          </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-border" />
+        {/* Divider — neumorphic groove */}
+        <div className="neu-inset h-[3px] rounded-full" />
 
         {/* Loading State */}
         {loading && (
@@ -72,7 +77,7 @@ export default function DashboardPage() {
 
         {/* Error State */}
         {error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <div className="neu-inset rounded-2xl p-4">
             <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
@@ -80,8 +85,8 @@ export default function DashboardPage() {
         {/* Empty State */}
         {!loading && !error && groups.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-5">
-              <Users className="h-8 w-8 text-primary" />
+            <div className="neu-raised flex items-center justify-center w-16 h-16 rounded-2xl mb-5">
+              <FolderOpen className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No groups yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mb-6">
@@ -90,7 +95,12 @@ export default function DashboardPage() {
               existing group with an invite code.
             </p>
             <div className="flex items-center gap-3">
-              <CreateGroupDialog onGroupCreated={handleGroupCreated} />
+              <CreateGroupDialog onGroupCreated={handleGroupCreated}>
+                <button className="neu-button h-10 px-5 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+                  <Plus className="h-4 w-4" />
+                  Create Group
+                </button>
+              </CreateGroupDialog>
               <button
                 onClick={() => navigate('/join')}
                 className="text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
@@ -103,47 +113,42 @@ export default function DashboardPage() {
 
         {/* Group Cards */}
         {!loading && groups.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
-              <Card
+              <div
                 key={group.id}
-                className="group cursor-pointer border-l-4 border-l-primary/40 hover:border-l-primary transition-all duration-200 hover:shadow-lg hover:shadow-primary/5"
+                className="neu-raised rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:translate-y-[-2px] group"
                 onClick={() => navigate(`/groups/${group.id}`)}
               >
-                <CardContent className="p-5">
-                  {/* Top row: name + currency */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-base truncate">
-                        {group.name}
-                      </h3>
-                      <span className="text-xs text-muted-foreground">
-                        {group.my_role === 'admin' ? 'Admin' : 'Member'}
-                      </span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="ml-2 shrink-0 text-xs font-mono"
-                    >
-                      {group.currency}
-                    </Badge>
+                {/* Top: name + currency */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-base truncate">
+                      {group.name}
+                    </h3>
+                    <span className="text-xs text-muted-foreground">
+                      {group.my_role === 'admin' ? 'Admin' : 'Member'}
+                    </span>
                   </div>
+                  <span className="neu-flat ml-2 shrink-0 text-xs font-mono px-2.5 py-1 rounded-lg text-muted-foreground">
+                    {group.currency}
+                  </span>
+                </div>
 
-                  {/* Bottom row: meta + arrow */}
-                  <div className="flex items-center justify-between pt-3 border-t border-border">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {group.member_count}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(group.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                {/* Bottom: meta row */}
+                <div className="neu-inset rounded-xl px-3 py-2.5 flex items-center justify-between mt-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {group.member_count}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(group.created_at).toLocaleDateString()}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+              </div>
             ))}
           </div>
         )}

@@ -7,8 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { updateGroup } from '@/services/groups';
 
@@ -28,7 +26,6 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset form to current group values when dialog opens
   useEffect(() => {
     if (open) {
       setName(group.name);
@@ -46,7 +43,6 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
       return;
     }
 
-    // Only send fields that actually changed
     const updates = {};
     if (trimmed !== group.name) updates.name = trimmed;
     if (currency !== group.currency) updates.currency = currency;
@@ -77,7 +73,7 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="neu-raised-lg rounded-3xl border-none" style={{ background: 'var(--neu-bg)' }}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit group</DialogTitle>
@@ -89,40 +85,51 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-group-name">Group name</Label>
-              <Input
-                id="edit-group-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-                maxLength={100}
-              />
+              <div className="neu-inset rounded-xl p-0.5">
+                <input
+                  id="edit-group-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                  maxLength={100}
+                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none"
+                />
+              </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="edit-group-currency">Currency</Label>
-              <select
-                id="edit-group-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <div className="neu-inset rounded-xl p-0.5">
+                <select
+                  id="edit-group-currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none cursor-pointer"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <div className="neu-inset rounded-xl p-3">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="neu-button h-10 px-6 rounded-xl text-sm font-medium text-primary disabled:opacity-50 cursor-pointer"
+            >
               {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -8,8 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createGroup } from '@/services/groups';
 import { Plus } from 'lucide-react';
@@ -24,7 +22,7 @@ const CURRENCIES = [
   { value: 'AUD', label: 'AUD - Australian Dollar' },
 ];
 
-export default function CreateGroupDialog({ onGroupCreated }) {
+export default function CreateGroupDialog({ onGroupCreated, children }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('INR');
@@ -51,7 +49,6 @@ export default function CreateGroupDialog({ onGroupCreated }) {
         return;
       }
 
-      // Success — close dialog, reset form, notify parent
       setOpen(false);
       setName('');
       setCurrency('INR');
@@ -66,24 +63,24 @@ export default function CreateGroupDialog({ onGroupCreated }) {
   function handleOpenChange(nextOpen) {
     setOpen(nextOpen);
     if (!nextOpen) {
-      // Reset form when dialog closes
       setName('');
       setCurrency('INR');
       setError('');
     }
   }
 
+  // Default trigger if no children provided
+  const trigger = children || (
+    <button className="neu-button h-10 px-4 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+      <Plus className="h-4 w-4" />
+      Create Group
+    </button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Group
-          </Button>
-        }
-      />
-      <DialogContent>
+      <DialogTrigger render={trigger} />
+      <DialogContent className="neu-raised-lg rounded-3xl border-none" style={{ background: 'var(--neu-bg)' }}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create a new group</DialogTitle>
@@ -95,41 +92,52 @@ export default function CreateGroupDialog({ onGroupCreated }) {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="group-name">Group name</Label>
-              <Input
-                id="group-name"
-                placeholder="e.g. Trip to Goa"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-                maxLength={100}
-              />
+              <div className="neu-inset rounded-xl p-0.5">
+                <input
+                  id="group-name"
+                  placeholder="e.g. Trip to Goa"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                  maxLength={100}
+                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none"
+                />
+              </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="group-currency">Currency</Label>
-              <select
-                id="group-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <div className="neu-inset rounded-xl p-0.5">
+                <select
+                  id="group-currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none cursor-pointer"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <div className="neu-inset rounded-xl p-3">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="neu-button h-10 px-6 rounded-xl text-sm font-medium text-primary disabled:opacity-50 cursor-pointer"
+            >
               {loading ? 'Creating...' : 'Create Group'}
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>
