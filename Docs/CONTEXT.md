@@ -782,3 +782,17 @@ server/src/
 
 - **Zero raw `<button>` or `<input>` elements** remain in `client/src/` (verified via grep).
 - Vite dev server compiles clean (HTTP 200, no errors).
+
+#### Additional shadcn/ui Components Installed
+
+Installed 9 new shadcn components to prepare for future features (expenses, balances, etc.):
+`select`, `textarea`, `tooltip`, `popover`, `checkbox`, `switch`, `skeleton`, `sheet`, `scroll-area`.
+
+Each was themed with Neumorphic defaults:
+- **`textarea.jsx`** → `.neu-inset rounded-xl`
+- **`select.jsx`** → Trigger: `.neu-flat rounded-xl`, Content: `.neu-raised-lg rounded-xl`
+- **`skeleton.jsx`** → `.neu-flat animate-pulse rounded-xl`
+- **`popover.jsx`** → Content: `.neu-raised-lg rounded-2xl`
+- **`sheet.jsx`** → Panel: `bg-[var(--neu-bg)]`
+
+**Total UI components**: 20 files in `components/ui/`.
