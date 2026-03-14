@@ -256,10 +256,11 @@ The following tasks are pending and should be the starting point in a new chat:
 6. **Start building** - suggested order:
    - ~~Auth flow (Google OAuth)~~ ✅ Done & tested end-to-end (see Section 13.1)
    - ~~Group CRUD + invite system~~ ✅ Done (see Section 13.3)
-   - Transaction CRUD + distribution logic
+   - ~~UI Redesign (Neumorphism & Layout)~~ ✅ Done (see Section 13.7 & 13.8)
+   - **Transaction CRUD + distribution logic** ⬅️ WE ARE HERE
    - Balance calculation
    - Activity logging
-   - UI pages
+   - Remaining UI integration
 
 ---
 
@@ -682,3 +683,32 @@ server/src/
 - **Error box**: `rounded-lg border border-destructive/30 bg-destructive/5 p-3/p-4`
 - **Empty state**: primary-colored icon in `bg-primary/10` rounded box, centered with description
 - **No `min-h-screen`**: AppLayout handles viewport height; pages use `p-4 sm:p-8` padding only
+
+---
+
+### 13.8 UI Overhaul continued — Neumorphism and Theme Toggle
+
+**Date**: 2026-03-14
+
+**Inspiration**: User requested a shift to a complete **Neumorphism** (soft UI) design system, with a specific focus on a clean "Shell" layout featuring a Top Bar and Dark/Light mode toggle.
+
+#### What was built
+
+1. **Neumorphic Design System (`index.css`)**
+   - Implemented strict CSS Variables for light and `.dark` neumorphic themes (`--neu-bg`, `--neu-shadow-light`, `--neu-shadow-dark`, etc.).
+   - Created global utility classes: `.neu-inset`, `.neu-raised`, `.neu-raised-lg`, `.neu-button`, `.neu-flat`.
+   - Overrode default `shadcn/ui` components (buttons, inputs, dropdowns, dialogs, tabs) using `@base-ui/react` `data-slot` selectors to force them into the neumorphic styling.
+
+2. **App Shell Refactor (`AppLayout.jsx`)**
+   - **Desktop**: A sleek, minimal sidebar containing only the logo and navigation links. A persistent Top Bar contains the Theme Toggle and User Profile trigger.
+   - **Mobile**: The sidebar is completely hidden. The Top Bar remains (Logo + Theme Toggle). A fixed Bottom Navigation Bar holds the route icons and the User Profile dropdown drawer, eliminating cluttered header menus.
+
+3. **Theme Context (`ThemeContext.jsx`)**
+   - Implemented a `ThemeProvider` context mapping light/dark modes to the document root and `localStorage`.
+   - Exposed `toggleTheme` to the Sun/Moon icons in `AppLayout` and absolute positioned on the `LoginPage`.
+
+4. **Page Refactors for Neumorphism**
+   - **LoginPage**: Converted to a floating neumorphic card with an inset login button and an embossed logo.
+   - **DashboardPage**: Group cards fully restyled with `.neu-raised-lg` and inset badges.
+   - **GroupDetailPage**: Replaced standard borders with embossed and debossed sections for Members, tabs, and invite code boxes. Replaced generic Back text links with neumorphic circular `ArrowLeft` buttons.
+   - **JoinGroupPage**: Restyled the preview card and input boxes with deep `.neu-inset` shadows.
