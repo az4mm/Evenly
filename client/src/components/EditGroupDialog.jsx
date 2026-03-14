@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { updateGroup } from '@/services/groups';
 
 const CURRENCIES = [
@@ -85,16 +87,13 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-group-name">Group name</Label>
-              <div className="neu-inset rounded-xl p-0.5">
-                <input
-                  id="edit-group-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoFocus
-                  maxLength={100}
-                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none"
-                />
-              </div>
+              <Input
+                id="edit-group-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                maxLength={100}
+              />
             </div>
 
             <div className="grid gap-2">
@@ -123,13 +122,13 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
           </div>
 
           <DialogFooter>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="neu-button h-10 px-6 rounded-xl text-sm font-medium text-primary disabled:opacity-50 cursor-pointer"
+              className="px-6 font-medium"
             >
               {loading ? 'Saving...' : 'Save Changes'}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

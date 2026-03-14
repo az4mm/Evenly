@@ -712,3 +712,73 @@ server/src/
    - **DashboardPage**: Group cards fully restyled with `.neu-raised-lg` and inset badges.
    - **GroupDetailPage**: Replaced standard borders with embossed and debossed sections for Members, tabs, and invite code boxes. Replaced generic Back text links with neumorphic circular `ArrowLeft` buttons.
    - **JoinGroupPage**: Restyled the preview card and input boxes with deep `.neu-inset` shadows.
+
+---
+
+### 13.9 Global UI Polish — Skeletons and Toasts
+
+**Date**: 2026-03-14
+
+**Objective**: Upgrade the UX to match the new Neumorphic design system by adding premium loading states and global notifications.
+
+#### What was built
+
+1. **Global Toast Notifications (`sonner`)**
+   - Installed the `sonner` package.
+   - Added `<Toaster />` to `App.jsx` positioned at `top-center` and synced with the `useTheme` context for perfect color accuracy.
+   - Enforced Neumorphic classes (`neu-raised`, `.neu-button`, etc.) via `toastOptions`.
+   - **Refactored Components**: Replaced clunky inline text errors (e.g., `<p className="text-destructive">`) with sleek slide-in `toast.error()` and `toast.success()` popups in:
+     - `CreateGroupDialog.jsx`
+     - `JoinGroupPage.jsx`
+     - `GroupDetailPage.jsx` (Member promotion, demotion, removal, group leaving, deleting)
+
+2. **Neumorphic Alert Dialogs**
+   - Installed shadcn `alert-dialog`.
+   - Replaced all raw browser `confirm()` prompts (e.g., "Are you sure you want to leave?") in `GroupDetailPage.jsx` with a custom Neumorphic `<AlertDialog>` using a centralized state manager (`confirmAction`).
+
+2. **Neumorphic Skeleton Loaders**
+   - Eliminated standard generic spinning circles for full-page data fetches.
+   - Built custom `.animate-pulse` Skeleton UI components that mimic the exact layout of the real content.
+   - **DashboardPage**: Shows a grid of 3 perfectly mapped dummy group cards (`.neu-raised`) with flat gray placeholder boxes for text.
+   - **GroupDetailPage**: Shows a full-page structured Skeleton mimicking the Group Header, Invite Box, Tabs, and 3 dummy member rows.
+
+3. **Button Loading States**
+   - Enforced a rule that all form submission buttons must instantly disable upon click to prevent double-submissions.
+   - Buttons now display `lucide-react`'s `<Loader2 className="animate-spin" />` conditionally based on the `loading` state variables (`LoginPage`, `CreateGroupDialog`, `JoinGroupPage`).
+
+4. **Branding Updates**
+   - Updated the document HTML title in `index.html` from the default Vite template to **"Evenly | Split Expenses"**.
+
+---
+
+### 13.10 shadcn/ui Component Uniformity Migration
+
+**Date**: 2026-03-15
+
+**Objective**: Eliminate all raw HTML `<button>` and `<input>` elements from the frontend codebase by migrating them to their shadcn/ui equivalents (`Button`, `Input`, `Card`). The goal is to ensure that every interactive component is built on top of shadcn's design system so that styling changes (like the Neumorphic theme) can be made in one place and propagate everywhere.
+
+#### shadcn Base Component Updates
+
+1. **`components/ui/button.jsx`** — Default variant changed from Tailwind's `bg-primary` to `.neu-button text-primary font-semibold`. Other variants (outline → `neu-flat`, secondary → `neu-inset`, ghost/destructive → kept lightweight).
+2. **`components/ui/input.jsx`** — Default input class changed to `.neu-inset h-12 rounded-xl` with generous padding, replacing the old flat bordered input.
+3. **`components/ui/card.jsx`** — Default card class changed to `.neu-raised-lg rounded-3xl py-6` with wider padding (`px-6`), replacing the old ring-based bordered card.
+
+#### Files Migrated (10 files total)
+
+| File | Elements Replaced |
+|---|---|
+| `LoginPage.jsx` | `<button>` → `<Button>`, `<div>` card → `<Card>` |
+| `JoinGroupPage.jsx` | `<button>` → `<Button>`, `<input>` → `<Input>`, `<div>` card → `<Card>` |
+| `DashboardPage.jsx` | `<button>` → `<Button>`, `<div>` group cards → `<Card>` |
+| `GroupDetailPage.jsx` | All raw `<button>` → `<Button>` |
+| `AppLayout.jsx` | All raw `<button>` → `<Button>` (sidebar toggle, theme, profile) |
+| `CreateGroupDialog.jsx` | `<button>` → `<Button>`, `<input>` → `<Input>` |
+| `EditGroupDialog.jsx` | `<button>` → `<Button>`, `<input>` → `<Input>` |
+| `button.jsx` | Neumorphic base styles embedded |
+| `input.jsx` | Neumorphic base styles embedded |
+| `card.jsx` | Neumorphic base styles embedded |
+
+#### Verification
+
+- **Zero raw `<button>` or `<input>` elements** remain in `client/src/` (verified via grep).
+- Vite dev server compiles clean (HTTP 200, no errors).

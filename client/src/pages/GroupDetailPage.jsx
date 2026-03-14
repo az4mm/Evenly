@@ -11,7 +11,18 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import EditGroupDialog from '@/components/EditGroupDialog';
+import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
   Copy,
@@ -28,6 +39,7 @@ import {
   Activity,
   Link as LinkIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function GroupDetailPage() {
   const { id } = useParams();
@@ -37,11 +49,19 @@ export default function GroupDetailPage() {
   const [group, setGroup] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [memberError, setMemberError] = useState('');
   const [codeCopied, setCodeCopied] = useState(false);
+
+  // Alert Dialog State
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ title: '', description: '', onConfirm: null, destructive: false });
+
+  function confirmAction(title, description, onConfirm, destructive = false) {
+    setAlertConfig({ title, description, onConfirm, destructive });
+    setAlertOpen(true);
+  }
 
   async function fetchData() {
     try {
@@ -61,7 +81,7 @@ export default function GroupDetailPage() {
         setMembers(membersRes.data);
       }
     } catch {
-      setError('Something went wrong.');
+      setError('Something went wrong loading group details.');
     } finally {
       setLoading(false);
     }
@@ -82,37 +102,68 @@ export default function GroupDetailPage() {
   }
 
   async function handlePromote(memberId) {
-    setMemberError('');
     const res = await updateMemberRole(id, memberId, 'admin');
-    if (res.success) fetchData();
-    else setMemberError(res.error?.message || 'Failed to promote member');
+    if (res.success) {
+      toast.success('Member promoted to admin');
+      fetchData();
+    } else toast.error(res.error?.message || 'Failed to promote member');
   }
 
   async function handleDemote(memberId) {
-    setMemberError('');
     const res = await updateMemberRole(id, memberId, 'member');
-    if (res.success) fetchData();
-    else setMemberError(res.error?.message || 'Failed to demote member');
+    if (res.success) {
+      toast.success('Admin demoted to member');
+      fetchData();
+    } else toast.error(res.error?.message || 'Failed to demote member');
   }
 
   async function handleRemoveMember(memberId) {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-    setMemberError('');
-    const res = await removeMember(id, memberId);
-    if (res.success) fetchData();
-    else setMemberError(res.error?.message || 'Failed to remove member');
+    confirmAction(
+      'Remove Member',
+      'Are you sure you want to remove this member from the group?',
+      async () => {
+        const res = await removeMember(id, memberId);
+        if (res.success) {
+          toast.success('Member removed');
+          fetchData();
+        } else toast.error(res.error?.message || 'Failed to remove member');
+      },
+      true // destructive
+    );
   }
 
   async function handleLeave() {
-    if (!confirm('Are you sure you want to leave this group?')) return;
-    const res = await removeMember(id, user.id);
-    if (res.success) navigate('/dashboard');
+    confirmAction(
+      'Leave Group',
+      'Are you sure you want to leave this group? You will no longer have access to its expenses.',
+      async () => {
+        const res = await removeMember(id, user.id);
+        if (res.success) {
+          toast.success('You left the group');
+          navigate('/dashboard');
+        } else {
+          toast.error('Failed to leave group');
+        }
+      },
+      true
+    );
   }
 
   async function handleDeleteGroup() {
-    if (!confirm('Are you sure you want to delete this group? This cannot be undone.')) return;
-    const res = await deleteGroup(id);
-    if (res.success) navigate('/dashboard');
+    confirmAction(
+      'Delete Group',
+      'Are you sure you want to delete this group? This action cannot be undone and will permanently delete all expenses and balances.',
+      async () => {
+        const res = await deleteGroup(id);
+        if (res.success) {
+          toast.success('Group deleted');
+          navigate('/dashboard');
+        } else {
+          toast.error('Failed to delete group');
+        }
+      },
+      true
+    );
   }
 
   function getInitials(name) {
@@ -120,13 +171,44 @@ export default function GroupDetailPage() {
     return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  // Loading state
+  // Loading State - Neumorphic Skeleton Shimmer
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm">Loading group...</span>
+      <div className="p-4 sm:p-8 animate-pulse">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="h-10 w-10 bg-muted rounded-xl mb-6" /> {/* back btn */}
+          
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="space-y-4">
+              <div className="h-8 w-48 bg-muted rounded-md" /> {/* Title */}
+              <div className="flex gap-2">
+                <div className="h-6 w-12 bg-muted/60 rounded-md" />
+                <div className="h-6 w-20 bg-muted/60 rounded-md" />
+              </div>
+            </div>
+            <div className="h-12 w-32 bg-muted rounded-xl" /> {/* Invite box */}
+          </div>
+
+          <div className="neu-inset h-[3px] rounded-full my-6" />
+
+          {/* Tabs skeleton */}
+          <div className="h-10 w-full sm:w-[400px] bg-muted rounded-xl mb-8" />
+          
+          {/* Members list skeleton */}
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="neu-raised flex items-center justify-between rounded-2xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-muted rounded-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-muted rounded-md" />
+                    <div className="h-3 w-40 bg-muted/60 rounded-md" />
+                  </div>
+                </div>
+                <div className="h-6 w-16 bg-muted/60 rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -139,12 +221,12 @@ export default function GroupDetailPage() {
         <div className="neu-inset rounded-2xl p-4">
           <p className="text-sm text-destructive">{error}</p>
         </div>
-        <button
+        <Button
           onClick={() => navigate('/dashboard')}
-          className="neu-button px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 cursor-pointer"
+          className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-        </button>
+        </Button>
       </div>
     );
   }
@@ -157,13 +239,14 @@ export default function GroupDetailPage() {
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Back button */}
-        <button
+        <Button
           onClick={() => navigate('/dashboard')}
-          className="neu-button h-10 w-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+          variant="outline"
+          className="h-10 w-10 p-0 border-none text-muted-foreground hover:text-primary"
           title="Back to dashboard"
         >
           <ArrowLeft className="h-5 w-5" />
-        </button>
+        </Button>
 
         {/* ─── Group Header ─── */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -176,9 +259,9 @@ export default function GroupDetailPage() {
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <button className="neu-button h-8 w-8 rounded-lg flex items-center justify-center cursor-pointer">
+                      <Button variant="outline" className="h-8 w-8 p-0 border-none">
                         <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                      </button>
+                      </Button>
                     }
                   />
                   <DropdownMenuContent align="start">
@@ -236,13 +319,14 @@ export default function GroupDetailPage() {
             >
               {codeCopied ? 'Copied!' : group.invite_code}
             </span>
-            <button
-              className="neu-button h-7 w-7 rounded-lg flex items-center justify-center text-primary cursor-pointer"
+            <Button
+              variant="outline"
+              className="h-7 w-7 p-0 border-none text-primary"
               onClick={handleCopyInvite}
               title="Copy invite link"
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -269,11 +353,7 @@ export default function GroupDetailPage() {
           {/* Members Tab */}
           <TabsContent value="members">
             <div className="space-y-3 mt-4">
-              {memberError && (
-                <div className="neu-inset rounded-xl p-3">
-                  <p className="text-sm text-destructive">{memberError}</p>
-                </div>
-              )}
+              {/* Removed memberError rendering since we use Toasts now */}
               {members.map((member) => {
                 const isSelf = member.id === user?.id;
                 const isMemberCreator = member.id === group.created_by;
@@ -307,9 +387,9 @@ export default function GroupDetailPage() {
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
-                              <button className="neu-button h-7 w-7 rounded-lg flex items-center justify-center cursor-pointer">
+                              <Button variant="outline" className="h-7 w-7 p-0 border-none">
                                 <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                              </button>
+                              </Button>
                             }
                           />
                           <DropdownMenuContent align="end">
@@ -386,6 +466,29 @@ export default function GroupDetailPage() {
           onGroupUpdated={() => fetchData()}
         />
       )}
+
+      {/* Confirmation Alert Dialog */}
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent className="neu-raised-lg border-none rounded-3xl" style={{ background: 'var(--neu-bg)' }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">{alertConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-base">
+              {alertConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 gap-3 sm:gap-2">
+            <AlertDialogCancel className="neu-flat h-11 px-6 rounded-xl border-none font-medium hover:bg-transparent">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={alertConfig.onConfirm}
+              className={`neu-button h-11 px-6 rounded-xl border-none font-medium ${alertConfig.destructive ? 'text-destructive' : 'text-primary'}`}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

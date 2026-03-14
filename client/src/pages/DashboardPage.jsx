@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getGroups } from '@/services/groups';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
 import { Users, ArrowRight, Plus, FolderOpen } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -18,10 +21,10 @@ export default function DashboardPage() {
       if (result.success) {
         setGroups(result.data);
       } else {
-        setError(result.error?.message || 'Failed to load groups');
+        toast.error(result.error?.message || 'Failed to load groups');
       }
     } catch {
-      setError('Something went wrong loading your groups.');
+      toast.error('Something went wrong loading your groups.');
     } finally {
       setLoading(false);
     }
@@ -54,10 +57,10 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <CreateGroupDialog onGroupCreated={handleGroupCreated}>
-              <button className="neu-button h-10 px-4 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+              <Button className="font-medium gap-2">
                 <Plus className="h-4 w-4" />
                 Create Group
-              </button>
+              </Button>
             </CreateGroupDialog>
           </div>
         </div>
@@ -65,22 +68,34 @@ export default function DashboardPage() {
         {/* Divider — neumorphic groove */}
         <div className="neu-inset h-[3px] rounded-full" />
 
-        {/* Loading State */}
+        {/* Loading State - Neumorphic Skeleton Shimmer */}
         {loading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span className="text-sm">Loading your groups...</span>
-            </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="neu-raised rounded-2xl p-5 animate-pulse">
+                {/* Top row skeleton */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="space-y-2 flex-1 mr-4">
+                    <div className="h-5 bg-muted rounded-md w-3/4" />
+                    <div className="h-3 bg-muted/60 rounded-md w-1/4" />
+                  </div>
+                  <div className="h-6 w-12 bg-muted rounded-lg shrink-0" />
+                </div>
+                
+                {/* Bottom row skeleton */}
+                <div className="neu-inset rounded-xl px-3 py-2.5 flex items-center justify-between mt-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-3 w-8 bg-muted rounded-md" />
+                    <div className="h-3 w-16 bg-muted rounded-md" />
+                  </div>
+                  <div className="h-4 w-4 bg-muted rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Error State */}
-        {error && (
-          <div className="neu-inset rounded-2xl p-4">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        )}
+        {/* Removed static error block, now handled by sonner Toasts */}
 
         {/* Empty State */}
         {!loading && !error && groups.length === 0 && (
@@ -96,17 +111,18 @@ export default function DashboardPage() {
             </p>
             <div className="flex items-center gap-3">
               <CreateGroupDialog onGroupCreated={handleGroupCreated}>
-                <button className="neu-button h-10 px-5 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+                <Button className="px-5 font-medium gap-2">
                   <Plus className="h-4 w-4" />
                   Create Group
-                </button>
+                </Button>
               </CreateGroupDialog>
-              <button
+              <Button
+                variant="link"
                 onClick={() => navigate('/join')}
-                className="text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+                className="font-medium"
               >
                 Join with code
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -115,9 +131,9 @@ export default function DashboardPage() {
         {!loading && groups.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
-              <div
+              <Card
                 key={group.id}
-                className="neu-raised rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:translate-y-[-2px] group"
+                className="p-5 cursor-pointer transition-all duration-200 hover:translate-y-[-2px] group"
                 onClick={() => navigate(`/groups/${group.id}`)}
               >
                 {/* Top: name + currency */}
@@ -148,7 +164,7 @@ export default function DashboardPage() {
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

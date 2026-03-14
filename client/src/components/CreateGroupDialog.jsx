@@ -9,8 +9,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { createGroup } from '@/services/groups';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const CURRENCIES = [
   { value: 'INR', label: 'INR - Indian Rupee' },
@@ -34,27 +37,27 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
 
     const trimmed = name.trim();
     if (!trimmed) {
-      setError('Group name is required');
+      toast.error('Group name is required');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const result = await createGroup({ name: trimmed, currency });
 
       if (result.error) {
-        setError(result.error);
+        toast.error(result.error);
         return;
       }
 
+      toast.success('Group created successfully!');
       setOpen(false);
       setName('');
       setCurrency('INR');
       onGroupCreated?.(result);
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -65,16 +68,15 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
     if (!nextOpen) {
       setName('');
       setCurrency('INR');
-      setError('');
     }
   }
 
   // Default trigger if no children provided
   const trigger = children || (
-    <button className="neu-button h-10 px-4 rounded-xl text-sm font-medium flex items-center gap-2 text-primary cursor-pointer">
+    <Button className="gap-2 font-medium">
       <Plus className="h-4 w-4" />
       Create Group
-    </button>
+    </Button>
   );
 
   return (
@@ -92,17 +94,14 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="group-name">Group name</Label>
-              <div className="neu-inset rounded-xl p-0.5">
-                <input
-                  id="group-name"
-                  placeholder="e.g. Trip to Goa"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoFocus
-                  maxLength={100}
-                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none"
-                />
-              </div>
+              <Input
+                id="group-name"
+                placeholder="e.g. Trip to Goa"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                maxLength={100}
+              />
             </div>
 
             <div className="grid gap-2">
@@ -123,21 +122,18 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
               </div>
             </div>
 
-            {error && (
-              <div className="neu-inset rounded-xl p-3">
-                <p className="text-sm text-destructive">{error}</p>
-              </div>
-            )}
+            {/* Removed inline error rendering since we use Toasts now */}
           </div>
 
           <DialogFooter>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="neu-button h-10 px-6 rounded-xl text-sm font-medium text-primary disabled:opacity-50 cursor-pointer"
+              className="px-6 font-medium gap-2"
             >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? 'Creating...' : 'Create Group'}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

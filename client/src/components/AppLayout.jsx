@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -52,13 +53,14 @@ export default function AppLayout({ children }) {
         <div className="p-4 h-full flex flex-col w-full overflow-hidden">
           {/* Logo & Toggle */}
           <div className={`flex items-center gap-3 h-14 shrink-0 px-2 mb-4 ${sidebarOpen ? '' : 'justify-center px-0'}`}>
-            <button 
+            <Button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="neu-raised flex items-center justify-center w-10 h-10 rounded-xl shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+              variant="secondary"
+              className="w-10 h-10 p-0 rounded-xl shrink-0 border-none"
               title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
             >
               <Scissors className="h-5 w-5 text-primary" />
-            </button>
+            </Button>
             {sidebarOpen && <span className="text-xl font-bold tracking-tight">Evenly</span>}
           </div>
 
@@ -105,9 +107,10 @@ export default function AppLayout({ children }) {
           {/* Right: Theme Toggle & User Profile */}
           <div className="flex items-center gap-4">
             {/* Theme Toggle Button */}
-            <button
+            <Button
               onClick={toggleTheme}
-              className="neu-button h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer transition-all"
+              variant="outline"
+              className="h-10 w-10 p-0 border-none rounded-xl text-muted-foreground hover:text-foreground transition-all"
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               {theme === 'light' ? (
@@ -115,13 +118,13 @@ export default function AppLayout({ children }) {
               ) : (
                 <Sun className="h-5 w-5" />
               )}
-            </button>
+            </Button>
 
             {/* User Dropdown (Desktop only) */}
             <div className="hidden md:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="neu-raised flex items-center gap-2 px-2 py-1.5 rounded-xl hover:opacity-80 transition-opacity cursor-pointer">
+                  <Button variant="secondary" className="flex items-center gap-2 px-2 py-1.5 rounded-xl border-none hover:opacity-80 transition-opacity h-auto">
                     <Avatar className="h-7 w-7">
                       {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
                       <AvatarFallback className="text-xs bg-primary/10 text-primary">
@@ -131,7 +134,7 @@ export default function AppLayout({ children }) {
                     <span className="text-sm font-medium hidden sm:block pr-1">
                       {displayName.split(' ')[0]}
                     </span>
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 mt-2">
                   <div className="px-2 py-1.5 text-sm font-medium">
@@ -188,7 +191,7 @@ export default function AppLayout({ children }) {
           {/* Mobile User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex flex-col items-center gap-1 px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer outline-none">
+              <Button variant="ghost" className="flex flex-col items-center gap-1 px-4 py-2 h-auto text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 <div className="p-1.5">
                   <Avatar className="h-5 w-5">
                     {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
@@ -198,7 +201,7 @@ export default function AppLayout({ children }) {
                   </Avatar>
                 </div>
                 <span>Profile</span>
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" sideOffset={16} className="w-56 mb-2">
               <div className="px-2 py-1.5 text-sm font-medium">

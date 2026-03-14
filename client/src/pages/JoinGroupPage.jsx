@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { previewGroup, joinGroup } from '@/services/groups';
 import { ArrowLeft, UserPlus, Users, Search, LinkIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 
 export default function JoinGroupPage() {
   const navigate = useNavigate();
@@ -9,7 +13,6 @@ export default function JoinGroupPage() {
 
   const [code, setCode] = useState(searchParams.get('code') || '');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Preview state (step 2)
   const [preview, setPreview] = useState(null);
@@ -26,12 +29,11 @@ export default function JoinGroupPage() {
   async function handlePreview(previewCode) {
     const trimmed = (previewCode || code).trim();
     if (!trimmed) {
-      setError('Please enter an invite code');
+      toast.error('Please enter an invite code');
       return;
     }
 
     setLoading(true);
-    setError('');
     setPreview(null);
 
     try {
@@ -40,10 +42,10 @@ export default function JoinGroupPage() {
       if (result.success) {
         setPreview(result.data);
       } else {
-        setError(result.error?.message || 'Invalid invite code');
+        toast.error(result.error?.message || 'Invalid invite code');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -51,18 +53,18 @@ export default function JoinGroupPage() {
 
   async function handleJoin() {
     setJoining(true);
-    setError('');
 
     try {
       const result = await joinGroup(code.trim());
 
       if (result.success) {
+        toast.success('Successfully joined the group!');
         navigate(`/groups/${result.data.id}`);
       } else {
-        setError(result.error?.message || 'Failed to join group');
+        toast.error(result.error?.message || 'Failed to join group');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setJoining(false);
     }
@@ -70,7 +72,6 @@ export default function JoinGroupPage() {
 
   function handleReset() {
     setPreview(null);
-    setError('');
     setCode('');
   }
 
@@ -78,13 +79,14 @@ export default function JoinGroupPage() {
     <div className="p-4 sm:p-8">
       <div className="max-w-md mx-auto space-y-8">
         {/* Back link */}
-        <button
+        <Button
           onClick={() => navigate('/dashboard')}
-          className="neu-button h-10 w-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+          variant="outline"
+          className="h-10 w-10 text-muted-foreground hover:text-primary p-0 border-none"
           title="Back to dashboard"
         >
           <ArrowLeft className="h-5 w-5" />
-        </button>
+        </Button>
 
         {/* Page Header */}
         <div>
@@ -102,41 +104,35 @@ export default function JoinGroupPage() {
         {/* Step 1: Enter code */}
         {!preview && (
           <form onSubmit={(e) => { e.preventDefault(); handlePreview(); }}>
-            <div className="neu-raised-lg rounded-3xl p-6 space-y-5">
-              <div className="space-y-2">
+            <Card className="p-6 space-y-5">
+              <div className="space-y-4">
                 <label htmlFor="invite-code" className="text-sm font-medium">
                   Invite Code
                 </label>
-                <div className="neu-inset rounded-xl p-1">
-                  <input
-                    id="invite-code"
-                    placeholder="A1B2C3"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    maxLength={6}
-                    autoFocus
-                    className="w-full bg-transparent font-mono text-center text-2xl tracking-[0.3em] h-12 outline-none px-3"
-                  />
-                </div>
+                <Input
+                  id="invite-code"
+                  placeholder="A1B2C3"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  autoFocus
+                  className="font-mono text-center text-2xl tracking-[0.3em] h-14"
+                />
                 <p className="text-xs text-muted-foreground text-center">
                   6 characters, letters and numbers
                 </p>
               </div>
 
-              {error && (
-                <div className="neu-inset rounded-xl p-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
+              {/* Error messages are now handled by sonner Toasts */}
 
-              <button
+              <Button
                 type="submit"
                 disabled={loading || code.trim().length === 0}
-                className="neu-button w-full h-11 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full h-11"
               >
                 {loading ? (
                   <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     Looking up...
                   </>
                 ) : (
@@ -145,15 +141,15 @@ export default function JoinGroupPage() {
                     Look Up Group
                   </>
                 )}
-              </button>
-            </div>
+              </Button>
+            </Card>
           </form>
         )}
 
         {/* Step 2: Confirm & join */}
         {preview && (
           <div className="space-y-4">
-            <div className="neu-raised-lg rounded-2xl p-5 space-y-3">
+            <Card className="p-5 space-y-3">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Group Found
               </p>
@@ -167,26 +163,23 @@ export default function JoinGroupPage() {
                   {preview.member_count} {preview.member_count === 1 ? 'member' : 'members'}
                 </span>
               </div>
-            </div>
+            </Card>
 
-            {error && (
-              <div className="neu-inset rounded-xl p-3">
-                <p className="text-sm text-destructive">{error}</p>
-              </div>
-            )}
+            {/* Error messages are now handled by sonner Toasts */}
 
             <div className="flex items-center gap-3">
-              <button
+              <Button
                 onClick={handleReset}
-                className="neu-button flex-1 h-11 rounded-xl text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
+                variant="outline"
+                className="flex-1 h-11"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Try Another
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleJoin}
                 disabled={joining}
-                className="neu-button flex-1 h-11 rounded-xl text-sm font-medium flex items-center justify-center gap-2 text-primary disabled:opacity-50 cursor-pointer"
+                className="flex-1 h-11"
               >
                 {joining ? (
                   <>
@@ -199,7 +192,7 @@ export default function JoinGroupPage() {
                     Join Group
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         )}
