@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGroups } from '@/services/groups';
+import { getUserBalanceSummary } from '@/services/balances';
 import CreateGroupDialog from '@/components/CreateGroupDialog';
 import { Users, ArrowRight, Plus, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,30 +13,39 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
+  const [balanceSummary, setBalanceSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  async function fetchGroups() {
+  async function fetchDashboardData() {
+    setLoading(true);
     try {
-      const result = await getGroups();
-      if (result.success) {
-        setGroups(result.data);
+      const [groupsRes, balancesRes] = await Promise.all([
+        getGroups(),
+        getUserBalanceSummary()
+      ]);
+      
+      if (groupsRes.success) {
+        setGroups(groupsRes.data);
       } else {
-        toast.error(result.error?.message || 'Failed to load groups');
+        toast.error(groupsRes.error?.message || 'Failed to load groups');
+      }
+
+      if (balancesRes.success) {
+        setBalanceSummary(balancesRes.data);
       }
     } catch {
-      toast.error('Something went wrong loading your groups.');
+      toast.error('Something went wrong loading dashboard data.');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchGroups();
+    fetchDashboardData();
   }, []);
 
   function handleGroupCreated() {
-    fetchGroups();
+    fetchDashboardData();
   }
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
@@ -46,7 +56,7 @@ export default function DashboardPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight neu-text-raised">
               Hey, {firstName}
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -56,17 +66,32 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <CreateGroupDialog onGroupCreated={handleGroupCreated}>
-              <Button className="font-medium gap-2">
-                <Plus className="h-4 w-4" />
-                Create Group
-              </Button>
-            </CreateGroupDialog>
+            <CreateGroupDialog onGroupCreated={handleGroupCreated} />
           </div>
         </div>
 
         {/* Divider — neumorphic groove */}
         <div className="neu-inset h-[3px] rounded-full" />
+
+        {/* Balance Summary Widgets */}
+        {!loading && balanceSummary && (
+          <div className="grid grid-cols-2 gap-4 mt-6 mb-8">
+            <div className="neu-raised rounded-2xl p-5 border-l-4 border-emerald-500 overflow-hidden relative group">
+              <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
+              <p className="text-sm font-medium text-muted-foreground mb-1 relative z-10">Total You are Owed</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 relative z-10 truncate">
+                ₹{balanceSummary.total_owed.toFixed(2)}
+              </p>
+            </div>
+            <div className="neu-raised rounded-2xl p-5 border-l-4 border-red-500 overflow-hidden relative group">
+              <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
+              <p className="text-sm font-medium text-muted-foreground mb-1 relative z-10">Total You Owe</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400 relative z-10 truncate">
+                ₹{balanceSummary.total_owe.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Loading State - Neumorphic Skeleton Shimmer */}
         {loading && (
@@ -98,7 +123,7 @@ export default function DashboardPage() {
         {/* Removed static error block, now handled by sonner Toasts */}
 
         {/* Empty State */}
-        {!loading && !error && groups.length === 0 && (
+        {!loading && groups.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="neu-raised flex items-center justify-center w-16 h-16 rounded-2xl mb-5">
               <FolderOpen className="h-8 w-8 text-primary" />
@@ -110,12 +135,7 @@ export default function DashboardPage() {
               existing group with an invite code.
             </p>
             <div className="flex items-center gap-3">
-              <CreateGroupDialog onGroupCreated={handleGroupCreated}>
-                <Button className="px-5 font-medium gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Group
-                </Button>
-              </CreateGroupDialog>
+              <CreateGroupDialog onGroupCreated={handleGroupCreated} />
               <Button
                 variant="link"
                 onClick={() => navigate('/join')}

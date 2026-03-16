@@ -98,19 +98,18 @@ export default function AppLayout({ children }) {
             <div className="neu-raised flex items-center justify-center w-10 h-10 rounded-xl shrink-0">
               <Scissors className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Evenly</span>
+            <span className="text-xl font-bold tracking-tight neu-text-raised">Evenly</span>
           </div>
-          
+
           {/* Empty spacer on desktop to push theme toggle to right */}
           <div className="hidden md:block"></div>
 
           {/* Right: Theme Toggle & User Profile */}
           <div className="flex items-center gap-4">
             {/* Theme Toggle Button */}
-            <Button
+            <button
               onClick={toggleTheme}
-              variant="outline"
-              className="h-10 w-10 p-0 border-none rounded-xl text-muted-foreground hover:text-foreground transition-all"
+              className="flex items-center justify-center h-10 w-10 p-0 border-none rounded-full neu-flat text-muted-foreground hover:text-foreground transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               {theme === 'light' ? (
@@ -118,31 +117,29 @@ export default function AppLayout({ children }) {
               ) : (
                 <Sun className="h-5 w-5" />
               )}
-            </Button>
+            </button>
 
             {/* User Dropdown (Desktop only) */}
             <div className="hidden md:block">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" className="flex items-center gap-2 px-2 py-1.5 rounded-xl border-none hover:opacity-80 transition-opacity h-auto">
-                    <Avatar className="h-7 w-7">
-                      {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {getInitials(displayName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium hidden sm:block pr-1">
-                      {displayName.split(' ')[0]}
-                    </span>
-                  </Button>
+                <DropdownMenuTrigger className="flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full border-none hover:opacity-80 transition-opacity outline-none neu-flat focus-visible:ring-2 focus-visible:ring-primary/50">
+                  <Avatar className="h-7 w-7">
+                    {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {getInitials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium hidden sm:block">
+                    {displayName.split(' ')[0]}
+                  </span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 mt-2">
-                  <div className="px-2 py-1.5 text-sm font-medium">
+                <DropdownMenuContent align="end" className="w-56 mt-2 neu-raised-lg border-none rounded-2xl p-2" style={{ background: 'var(--neu-bg)' }}>
+                  <div className="px-2 py-2 text-sm font-medium">
                     {displayName}
                     <p className="text-xs text-muted-foreground font-normal truncate mt-0.5">{user?.email}</p>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                  <DropdownMenuSeparator className="bg-border/40 my-1" />
+                  <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl py-2 mt-1">
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
@@ -190,26 +187,24 @@ export default function AppLayout({ children }) {
 
           {/* Mobile User Profile Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex flex-col items-center gap-1 px-4 py-2 h-auto text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                <div className="p-1.5">
-                  <Avatar className="h-5 w-5">
-                    {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
-                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                      {getInitials(displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <span>Profile</span>
-              </Button>
+            <DropdownMenuTrigger className="flex flex-col items-center gap-1 px-4 py-2 h-auto text-xs font-medium text-muted-foreground hover:text-foreground transition-colors outline-none bg-transparent">
+              <div className="p-1.5">
+                <Avatar className="h-5 w-5">
+                  {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                    {getInitials(displayName)}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <span>Profile</span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" sideOffset={16} className="w-56 mb-2">
-              <div className="px-2 py-1.5 text-sm font-medium">
+            <DropdownMenuContent align="end" side="top" sideOffset={16} className="w-56 mb-2 neu-raised-lg border-none rounded-2xl p-2" style={{ background: 'var(--neu-bg)' }}>
+              <div className="px-2 py-2 text-sm font-medium">
                 {displayName}
                 <p className="text-xs text-muted-foreground font-normal truncate mt-0.5">{user?.email}</p>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+              <DropdownMenuSeparator className="bg-border/40 my-1" />
+              <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-xl py-2 mt-1">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </DropdownMenuItem>

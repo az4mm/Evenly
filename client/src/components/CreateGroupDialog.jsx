@@ -30,7 +30,6 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('INR');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -80,9 +79,12 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
   );
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={trigger} />
-      <DialogContent className="neu-raised-lg rounded-3xl border-none" style={{ background: 'var(--neu-bg)' }}>
+    <>
+      <div className="inline-block cursor-pointer" onClick={() => setOpen(true)}>
+        {trigger}
+      </div>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="neu-raised-lg rounded-3xl border-none" style={{ background: 'var(--neu-bg)' }}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create a new group</DialogTitle>
@@ -138,5 +140,6 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

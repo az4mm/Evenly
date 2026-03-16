@@ -198,6 +198,12 @@
         -3px -3px 6px var(--neu-shadow-light);
 }
 
+.neu-text-raised {
+    text-shadow:
+        2px 2px 4px var(--neu-shadow-dark),
+        -2px -2px 4px var(--neu-shadow-light);
+}
+
 /* Sidebar neumorphism */
 .sidebar-neu-raised {
     background: var(--sidebar-bg);
