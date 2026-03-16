@@ -13,6 +13,14 @@ import {
   removeMember,
   updateMemberRole,
 } from '../controllers/groupController.js';
+import {
+  addExpense,
+  listExpenses,
+  getExpense,
+  updateExpense,
+  deleteExpense,
+} from '../controllers/expenseController.js';
+import { getGroupBalances } from '../controllers/balanceController.js';
 
 const router = Router();
 
@@ -29,5 +37,15 @@ router.delete('/:id', authenticate, requireGroupAdmin, deleteGroup);
 router.get('/:id/members', authenticate, requireGroupMember, listMembers);
 router.delete('/:id/members/:userId', authenticate, requireGroupMember, removeMember);
 router.patch('/:id/members/:userId', authenticate, requireGroupAdmin, updateMemberRole);
+
+// Balances
+router.get('/:id/balances', authenticate, requireGroupMember, getGroupBalances);
+
+// Expense CRUD
+router.post('/:id/expenses', authenticate, requireGroupMember, addExpense);
+router.get('/:id/expenses', authenticate, requireGroupMember, listExpenses);
+router.get('/:id/expenses/:expenseId', authenticate, requireGroupMember, getExpense);
+router.patch('/:id/expenses/:expenseId', authenticate, requireGroupMember, updateExpense);
+router.delete('/:id/expenses/:expenseId', authenticate, requireGroupMember, deleteExpense);
 
 export default router;

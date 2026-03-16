@@ -800,7 +800,33 @@ Each was themed with Neumorphic defaults:
 - **`textarea.jsx`** → `.neu-inset rounded-xl`
 - **`select.jsx`** → Trigger: `.neu-flat rounded-xl`, Content: `.neu-raised-lg rounded-xl`
 - **`skeleton.jsx`** → `.neu-flat animate-pulse rounded-xl`
-- **`popover.jsx`** → Content: `.neu-raised-lg rounded-2xl`
 - **`sheet.jsx`** → Panel: `bg-[var(--neu-bg)]`
 
 **Total UI components**: 20 files in `components/ui/`.
+
+---
+
+### 13.11 Backend Expense Split Calculations Migration
+
+**Date**: 2026-03-16
+
+**Objective**: Ensure data consistency and prevent floating point errors by moving all Split Calculations (Equal, Percentage, Share) from the frontend UI to the backend Express server.
+
+#### What was built
+- **Backend**: Updated `expenseController.js` logic with precise calculation engines that natively handle decimal remainders (cents). It calculates individual debts directly from raw split ratios before storing transaction inputs and adjusting balances.
+- **Frontend**: Simplified `AddExpenseDialog.jsx`. It now only sends raw distributions (e.g., `splits: [{ user_id: X, percentage: 50 }, ...]`) without pre-computing monetary values for non-exact splits.
+- **Validation**: Strict validation (0.005 tolerance) introduced in the backend to ensure requested calculations equal the total amount. Fixed a floating point equality bug `Math.round(parsedAmount * 100) !== Math.round(uiCalculatedTotal * 100)` in the UI validator.
+
+---
+
+### 13.12 UI Polish: Neumorphic Consistency & Expense Context
+
+**Date**: 2026-03-17
+
+**Objective**: Round out the Neumorphic styling for components that were lagging behind, and improve the immediate clarity of the expense lists.
+
+#### What was built
+- **Dropdowns & Overrides**: Applied `neu-flat`, `neu-raised-lg`, and `rounded-2xl` strictly to the Desktop and Mobile Profile dropdowns (`AppLayout.jsx`), and the Member rows in the `AddExpenseDialog.jsx` (reverting flat shadcn Cards back to neumorphic divs).
+- **Avatar Dropdown**: Rebuilt the "Paid by" dropdown mechanism into a custom Neumorphic `<Select>` trigger that accurately displays user Avatars inline alongside names.
+- **Contextual Data in Expense Rows**: Modified `GroupDetailPage.jsx` to parse the `created_at` timestamp and display exact times alongside dates (e.g., "16 Mar at 06:59 pm"). Added logic to conditionally render a friendly "Paid by you" string if the expense payer matches the currently authenticated user.
+- **3D Neumorphic Text**: Created a `.neu-text-raised` CSS utility with dark and light text-shadow variables. Applied this 3D raised text effect to the 'Evenly' branding logo, the Dashboard user greeting, and Group Detail headlines.

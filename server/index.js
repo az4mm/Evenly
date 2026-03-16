@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './src/routes/auth.js';
 import groupRoutes from './src/routes/groups.js';
+import userRoutes from './src/routes/users.js';
 import { runMigrations } from './src/db/migrate.js';
 
 dotenv.config();
@@ -18,6 +19,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/groups', groupRoutes);
 
 // Run migrations then start server
