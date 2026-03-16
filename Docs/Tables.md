@@ -107,7 +107,18 @@ Stores expenses and settlements.
 
 ### Distribution JSONB Structure
 
-#### Equal Split
+#### Equal Split (API Request)
+```json
+{
+  "method": "equal",
+  "splits": [
+    { "user_id": "uuid-1" },
+    { "user_id": "uuid-2" }
+  ]
+}
+```
+
+#### Equal Split (Stored in DB)
 ```json
 {
   "method": "equal",
@@ -129,7 +140,18 @@ Stores expenses and settlements.
 }
 ```
 
-#### Percentage
+#### Percentage (API Request)
+```json
+{
+  "method": "percentage",
+  "splits": [
+    { "user_id": "uuid-1", "percentage": 75 },
+    { "user_id": "uuid-2", "percentage": 25 }
+  ]
+}
+```
+
+#### Percentage (Stored in DB)
 ```json
 {
   "method": "percentage",
@@ -140,7 +162,18 @@ Stores expenses and settlements.
 }
 ```
 
-#### Share/Ratio
+#### Share/Ratio (API Request)
+```json
+{
+  "method": "share",
+  "splits": [
+    { "user_id": "uuid-1", "shares": 3 },
+    { "user_id": "uuid-2", "shares": 1 }
+  ]
+}
+```
+
+#### Share/Ratio (Stored in DB)
 ```json
 {
   "method": "share",

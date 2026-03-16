@@ -709,8 +709,16 @@ server/src/
 
 4. **Page Refactors for Neumorphism**
    - **LoginPage**: Converted to a floating neumorphic card with an inset login button and an embossed logo.
-   - **DashboardPage**: Group cards fully restyled with `.neu-raised-lg` and inset badges.
-   - **GroupDetailPage**: Replaced standard borders with embossed and debossed sections for Members, tabs, and invite code boxes. Replaced generic Back text links with neumorphic circular `ArrowLeft` buttons.
+   - **GroupDetailPage Integration**: 
+  - The Expenses tab was rebuilt to fetch real data from the API and display expense cards with a dropdown menu offering **Edit** and **Delete** actions.
+  - **Performance Optimization**: Reordered tabs to make Expenses the default view. Member data is now lazy-loaded (only fetched if the user clicks the Members tab or opens the Add Expense dialog), drastically lowering initial page load times. (Features Neumorphic shimmer UI for lazy loading).
+  - **Add/Edit Expense Dialog**: A complex Neumorphic modal containing:
+    - Doubles as both an "Add" and "Edit" dialog using an `expenseToEdit` prop that pre-fills state.
+    - Amount, Description, Date, and Category inputs (with emojis).
+    - Paid By selector (defaults to current user).
+    - Split Distribution tabs for all 4 methods: **Equal**, **Exact**, **Percentage (%)**, and **Shares**.
+    - Dynamic member inclusion checkboxes.
+  - Replaced generic Back text links with neumorphic circular `ArrowLeft` buttons.
    - **JoinGroupPage**: Restyled the preview card and input boxes with deep `.neu-inset` shadows.
 
 ---
