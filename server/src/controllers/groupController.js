@@ -388,19 +388,24 @@ export async function removeMember(req, res) {
       });
     }
 
-    // TODO: Uncomment when balances feature is built
-    // const { rows: balanceRows } = await db.query(
-    //   `SELECT COUNT(*) FROM balances
-    //    WHERE group_id = $1 AND (from_user_id = $2 OR to_user_id = $2)`,
-    //   [req.params.id, targetUserId]
-    // );
-    //
-    // if (parseInt(balanceRows[0].count, 10) > 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: { code: 'VALIDATION_ERROR', message: 'Must settle all balances before leaving' },
-    //   });
-    // }
+    // A member can be removed/leave only when their group balance is fully settled.
+    const { rows: balanceRows } = await db.query(
+      `SELECT COUNT(*) FROM balances
+       WHERE group_id = $1 AND (from_user_id = $2 OR to_user_id = $2)`,
+      [req.params.id, targetUserId]
+    );
+
+    if (parseInt(balanceRows[0].count, 10) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: isSelf
+            ? 'You can only leave the group when your balance is zero'
+            : 'You can only remove a member when their balance is zero',
+        },
+      });
+    }
 
     await db.query(
       'DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2',
