@@ -776,10 +776,10 @@ export default function GroupDetailPage() {
       {isAdmin && group && (
         <EditGroupDialog
         group={group}
-        isOpen={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
         onGroupUpdated={(updated) => setGroup(updated)}
-      />
+        />
       )}
 
       <ExpenseDetailDialog
