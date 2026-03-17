@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,10 +19,28 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Receipt, AlertCircle, Equal, ChevronDown } from 'lucide-react';
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Loader2,
+  Receipt,
+  AlertCircle,
+  Equal,
+  Calendar as CalendarIcon,
+} from 'lucide-react';
 import { addExpense, updateExpense } from '@/services/expenses';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
   'Food & Drinks', 'Transportation', 'Accommodation', 'Shopping',
@@ -118,7 +136,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Others');
   const [paidBy, setPaidBy] = useState(currentUserId);
-  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [transactionDate, setTransactionDate] = useState(new Date());
   const [splitMethod, setSplitMethod] = useState('equal');
   const [loading, setLoading] = useState(false);
 
@@ -183,7 +201,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
 
         try {
           if (expenseToEdit.transaction_date) {
-            setTransactionDate(new Date(expenseToEdit.transaction_date).toISOString().split('T')[0]);
+            setTransactionDate(new Date(expenseToEdit.transaction_date));
           }
         } catch { /* ignore */ }
 
@@ -219,7 +237,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
         setAmount('');
         setCategory('Others');
         setPaidBy(currentUserId);
-        setTransactionDate(new Date().toISOString().split('T')[0]);
+        setTransactionDate(new Date());
         setSplitMethod('equal');
 
         const included = {};
@@ -353,7 +371,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
       category,
       amount: parsedAmount,
       paid_by: paidBy,
-      transaction_date: transactionDate,
+      transaction_date: transactionDate.toISOString().split('T')[0],
       distribution: { method: splitMethod, splits: computedSplits },
     };
 
@@ -450,13 +468,30 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
             </div>
             <div className="space-y-2">
               <Label htmlFor="exp-date">Date</Label>
-              <Input
-                id="exp-date"
-                type="date"
-                className={inputCls}
-                value={transactionDate}
-                onChange={(e) => setTransactionDate(e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-10 px-3 justify-between text-left font-normal neu-button border-none rounded-xl hover:text-foreground",
+                        !transactionDate && "text-muted-foreground"
+                      )}
+                    >
+                    <span className="truncate">
+                      {transactionDate ? format(transactionDate, "PPP") : "Pick a date"}
+                    </span>
+                    <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 border-none rounded-3xl neu-raised-lg" align="end" style={{ background: 'var(--neu-bg)' }}>
+                  <Calendar
+                    mode="single"
+                    selected={transactionDate}
+                    onSelect={(date) => date && setTransactionDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 

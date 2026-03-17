@@ -4,20 +4,20 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "neu-button text-primary font-semibold",
         outline:
-          "neu-flat text-muted-foreground hover:text-foreground",
+          "neu-button text-muted-foreground hover:text-foreground",
         secondary:
-          "neu-inset text-foreground",
+          "neu-button text-foreground",
         ghost:
-          "hover:bg-muted/30 hover:text-foreground aria-expanded:bg-muted/30 aria-expanded:text-foreground rounded-lg",
+          "neu-button text-muted-foreground hover:text-foreground",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 rounded-lg",
-        link: "text-primary underline-offset-4 hover:underline",
+          "neu-button text-destructive focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
+        link: "neu-button text-primary",
       },
       size: {
         default:

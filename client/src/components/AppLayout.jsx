@@ -107,9 +107,10 @@ export default function AppLayout({ children }) {
           {/* Right: Theme Toggle & User Profile */}
           <div className="flex items-center gap-4">
             {/* Theme Toggle Button */}
-            <button
+            <Button
               onClick={toggleTheme}
-              className="flex items-center justify-center h-10 w-10 p-0 border-none rounded-full neu-flat text-muted-foreground hover:text-foreground transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              variant="outline"
+              className="h-10 w-10 p-0 border-none rounded-full text-muted-foreground hover:text-foreground"
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
               {theme === 'light' ? (
@@ -117,12 +118,12 @@ export default function AppLayout({ children }) {
               ) : (
                 <Sun className="h-5 w-5" />
               )}
-            </button>
+            </Button>
 
             {/* User Dropdown (Desktop only) */}
             <div className="hidden md:block">
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full border-none hover:opacity-80 transition-opacity outline-none neu-flat focus-visible:ring-2 focus-visible:ring-primary/50">
+                <DropdownMenuTrigger className="flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full border-none neu-button text-muted-foreground hover:text-foreground transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                   <Avatar className="h-7 w-7">
                     {profilePic && <AvatarImage src={profilePic} alt={displayName} />}
                     <AvatarFallback className="text-xs bg-primary/10 text-primary">
@@ -187,7 +188,7 @@ export default function AppLayout({ children }) {
 
           {/* Mobile User Profile Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex flex-col items-center gap-1 px-4 py-2 h-auto text-xs font-medium text-muted-foreground hover:text-foreground transition-colors outline-none bg-transparent">
+            <DropdownMenuTrigger className="flex flex-col items-center gap-1 px-4 py-2 h-auto text-xs font-medium text-muted-foreground hover:text-foreground transition-all outline-none neu-button rounded-2xl border-none">
               <div className="p-1.5">
                 <Avatar className="h-5 w-5">
                   {profilePic && <AvatarImage src={profilePic} alt={displayName} />}

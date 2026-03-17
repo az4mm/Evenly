@@ -503,7 +503,7 @@ export default function GroupDetailPage() {
 
                         {isAdmin && !isSelf && !isMemberCreator && (
                           <DropdownMenu>
-                            <DropdownMenuTrigger className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors outline-none">
+                            <DropdownMenuTrigger className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md neu-button text-muted-foreground hover:text-foreground transition-all outline-none">
                               <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -600,7 +600,7 @@ export default function GroupDetailPage() {
                           <DropdownMenuTrigger
                             onClick={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md hover:bg-black/5 transition-all outline-none"
+                            className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md neu-button text-muted-foreground hover:text-foreground transition-all outline-none"
                           >
                             <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                           </DropdownMenuTrigger>
