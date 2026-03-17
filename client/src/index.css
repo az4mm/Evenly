@@ -242,8 +242,9 @@
    shadcn Component Overrides (Neumorphic)
    ═══════════════════════════════════════ */
 
-/* Dropdown menus */
-[data-slot="dropdown-menu-content"] {
+/* Dropdown menus & Select content */
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"] {
     background: var(--neu-bg) !important;
     border: none !important;
     border-radius: 1rem !important;
@@ -253,10 +254,12 @@
     padding: 6px !important;
 }
 
-/* Dropdown menu items */
+/* Dropdown menu & Select items */
 [data-slot="dropdown-menu-item"]:hover,
 [data-slot="dropdown-menu-item"]:focus,
-[data-slot="dropdown-menu-item"][data-highlighted] {
+[data-slot="dropdown-menu-item"][data-highlighted],
+[data-slot="select-item"]:focus,
+[data-slot="select-item"][data-highlighted] {
     background: transparent !important;
     box-shadow:
         inset 2px 2px 4px var(--neu-shadow-dark),

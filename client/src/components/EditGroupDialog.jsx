@@ -7,10 +7,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGroup } from '@/services/groups';
+import { toast } from 'sonner';
 
 const CURRENCIES = [
   { value: 'INR', label: 'INR - Indian Rupee' },
@@ -61,13 +69,17 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
       const result = await updateGroup(group.id, updates);
 
       if (result.success) {
+        toast.success('Group updated successfully');
         onOpenChange(false);
         onGroupUpdated?.(result.data);
       } else {
         setError(result.error?.message || 'Failed to update group');
+        toast.error(result.error?.message || 'Failed to update group');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
+      const msg = 'Something went wrong. Please try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -75,48 +87,52 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="neu-raised-lg rounded-3xl border-none" style={{ background: 'var(--neu-bg)' }}>
+      <DialogContent className="neu-raised-lg rounded-3xl border-none max-w-md w-[90vw]" style={{ background: 'var(--neu-bg)' }}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit group</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-2xl font-bold tracking-tight">Edit group</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Update the group name or currency. Currency can only be changed if no transactions exist.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-6 py-8">
             <div className="grid gap-2">
-              <Label htmlFor="edit-group-name">Group name</Label>
+              <Label htmlFor="edit-group-name" className="text-sm font-medium ml-1">
+                Group name
+              </Label>
               <Input
                 id="edit-group-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
                 maxLength={100}
+                placeholder="Ex: Trip to Paris"
+                className="h-12"
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-group-currency">Currency</Label>
-              <div className="neu-inset rounded-xl p-0.5">
-                <select
-                  id="edit-group-currency"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full bg-transparent h-10 px-3 rounded-xl text-sm outline-none cursor-pointer"
-                >
+              <Label htmlFor="edit-group-currency" className="text-sm font-medium ml-1">
+                Base Currency
+              </Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="edit-group-currency" className="h-12">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent className="neu-raised-lg border-none rounded-2xl">
                   {CURRENCIES.map((c) => (
-                    <option key={c.value} value={c.value}>
+                    <SelectItem key={c.value} value={c.value} className="rounded-xl focus:bg-primary/10">
                       {c.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             {error && (
-              <div className="neu-inset rounded-xl p-3">
-                <p className="text-sm text-destructive">{error}</p>
+              <div className="neu-inset rounded-2xl p-4 bg-destructive/5 border border-destructive/10 animate-in fade-in zoom-in duration-200">
+                <p className="text-sm text-destructive font-medium">{error}</p>
               </div>
             )}
           </div>
@@ -125,9 +141,9 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
             <Button
               type="submit"
               disabled={loading}
-              className="px-6 font-medium"
+              className="h-12 px-8 font-semibold text-base w-full sm:w-auto"
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Saving Changes...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>
@@ -135,3 +151,4 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
     </Dialog>
   );
 }
+

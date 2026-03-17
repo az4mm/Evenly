@@ -61,19 +61,14 @@ function enforceInteger(value) {
 }
 
 function PaidByDropdown({ members, value, onChange, currentUserId }) {
-  const [open, setOpen] = useState(false);
   const selectedMember = members.find((m) => m.id === value);
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="neu-inset h-10 w-full rounded-xl px-3 flex items-center justify-between text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20"
-      >
-        <div className="flex items-center gap-2 truncate">
-          {selectedMember ? (
-            <>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full h-10 px-3">
+        <SelectValue placeholder="Select member">
+          {selectedMember && (
+            <div className="flex items-center gap-2 truncate">
               <Avatar className="h-5 w-5 shrink-0">
                 {selectedMember.profile_pic ? (
                   <AvatarImage src={selectedMember.profile_pic} alt={selectedMember.name} />
@@ -89,26 +84,14 @@ function PaidByDropdown({ members, value, onChange, currentUserId }) {
                   <span className="text-muted-foreground ml-1 text-xs">(you)</span>
                 )}
               </span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">Select member</span>
+            </div>
           )}
-        </div>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-2 neu-raised-lg border-none rounded-xl overflow-hidden py-1 max-h-48 overflow-y-auto" style={{ background: 'var(--neu-bg)' }}>
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => {
-                onChange(m.id);
-                setOpen(false);
-              }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${value === m.id ? 'bg-primary/10 text-primary font-medium' : ''}`}
-            >
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="neu-raised-lg border-none rounded-2xl">
+        {members.map((m) => (
+          <SelectItem key={m.id} value={m.id} className="rounded-xl focus:bg-primary/10">
+            <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6 shrink-0">
                 {m.profile_pic && <AvatarImage src={m.profile_pic} alt={m.name} />}
                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -121,11 +104,11 @@ function PaidByDropdown({ members, value, onChange, currentUserId }) {
                   <span className="text-muted-foreground ml-1 text-xs">(you)</span>
                 )}
               </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

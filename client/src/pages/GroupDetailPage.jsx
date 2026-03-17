@@ -76,10 +76,32 @@ export default function GroupDetailPage() {
   // Alert Dialog State
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ title: '', description: '', onConfirm: null, destructive: false });
+  const [warningOpen, setWarningOpen] = useState(false);
+  const [warningConfig, setWarningConfig] = useState({ title: '', description: '' });
 
   function confirmAction(title, description, onConfirm, destructive = false) {
     setAlertConfig({ title, description, onConfirm, destructive });
     setAlertOpen(true);
+  }
+
+  function showWarning(title, description) {
+    setWarningConfig({ title, description });
+    setWarningOpen(true);
+  }
+
+  async function hasUnsettledBalances(userId) {
+    try {
+      const balancesRes = await getGroupBalances(id);
+      if (!balancesRes.success) {
+        return null;
+      }
+
+      return balancesRes.data.balances.some(
+        (balance) => balance.from_user.id === userId || balance.to_user.id === userId
+      );
+    } catch {
+      return null;
+    }
   }
 
   async function fetchGroupAndExpenses() {
@@ -181,6 +203,15 @@ export default function GroupDetailPage() {
   }
 
   async function handleRemoveMember(memberId) {
+    const hasUnsettled = await hasUnsettledBalances(memberId);
+    if (hasUnsettled === true) {
+      showWarning(
+        'Cannot Remove Member',
+        'You can only remove a member when their balance is zero. Settle all balances first, then try again.'
+      );
+      return;
+    }
+
     confirmAction(
       'Remove Member',
       'Are you sure you want to remove this member from the group?',
@@ -197,6 +228,15 @@ export default function GroupDetailPage() {
   }
 
   async function handleLeave() {
+    const hasUnsettled = await hasUnsettledBalances(user.id);
+    if (hasUnsettled === true) {
+      showWarning(
+        'Cannot Leave Group',
+        'You can only leave this group when your balance is zero. Settle all balances first, then try again.'
+      );
+      return;
+    }
+
     confirmAction(
       'Leave Group',
       'Are you sure you want to leave this group? You will no longer have access to its expenses.',
@@ -808,6 +848,26 @@ export default function GroupDetailPage() {
               className={`neu-button h-11 px-6 rounded-xl border-none font-medium ${alertConfig.destructive ? 'text-destructive' : 'text-primary'}`}
             >
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Warning Alert Dialog */}
+      <AlertDialog open={warningOpen} onOpenChange={setWarningOpen}>
+        <AlertDialogContent className="neu-raised-lg border-none rounded-3xl" style={{ background: 'var(--neu-bg)' }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">{warningConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-base">
+              {warningConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 gap-3 sm:gap-2">
+            <AlertDialogAction
+              onClick={() => setWarningOpen(false)}
+              className="neu-button h-11 px-6 rounded-xl border-none font-medium text-primary"
+            >
+              Got it
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
