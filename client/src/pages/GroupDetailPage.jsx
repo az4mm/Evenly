@@ -379,7 +379,7 @@ export default function GroupDetailPage() {
                         <UserMinus className="h-4 w-4 mr-2" /> Leave Group
                       </DropdownMenuItem>
                     )}
-                    {isAdmin && (
+                    {isCreator && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem variant="destructive" onClick={handleDeleteGroup}>

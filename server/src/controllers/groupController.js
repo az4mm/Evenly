@@ -205,9 +205,25 @@ export async function updateGroup(req, res) {
   }
 }
 
-// DELETE /api/groups/:id - Soft delete group (admin only)
+// DELETE /api/groups/:id - Soft delete group (creator only)
 export async function deleteGroup(req, res) {
   try {
+    // Verify user is the creator
+    const { rows: groupRows } = await db.query(
+      'SELECT created_by FROM groups WHERE id = $1 AND is_deleted = false',
+      [req.params.id]
+    );
+
+    if (groupRows.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'Group not found' } });
+    }
+
+    if (groupRows[0].created_by !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only the group creator can delete this group' },
+      });
+    }
     // TODO: Uncomment when balances feature is built
     // const { rows: balanceRows } = await db.query(
     //   'SELECT COUNT(*) FROM balances WHERE group_id = $1',
