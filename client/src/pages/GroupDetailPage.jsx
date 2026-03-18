@@ -129,8 +129,8 @@ export default function GroupDetailPage() {
     }
   }
 
-  async function loadMembersIfNeeded() {
-    if (members.length > 0 || membersLoading) return;
+  async function loadMembersIfNeeded(force = false) {
+    if (!force && (members.length > 0 || membersLoading)) return;
     setMembersLoading(true);
     try {
       const membersRes = await getMembers(id);
@@ -189,7 +189,7 @@ export default function GroupDetailPage() {
     if (res.success) {
       toast.success('Member promoted to admin');
       fetchGroupAndExpenses();
-      loadMembersIfNeeded();
+      loadMembersIfNeeded(true);
     } else toast.error(res.error?.message || 'Failed to promote member');
   }
 
@@ -198,7 +198,7 @@ export default function GroupDetailPage() {
     if (res.success) {
       toast.success('Admin demoted to member');
       fetchGroupAndExpenses();
-      loadMembersIfNeeded();
+      loadMembersIfNeeded(true);
     } else toast.error(res.error?.message || 'Failed to demote member');
   }
 
@@ -220,7 +220,7 @@ export default function GroupDetailPage() {
         if (res.success) {
           toast.success('Member removed');
           fetchGroupAndExpenses();
-          loadMembersIfNeeded();
+          loadMembersIfNeeded(true);
         } else toast.error(res.error?.message || 'Failed to remove member');
       },
       true // destructive
