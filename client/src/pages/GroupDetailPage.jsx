@@ -6,6 +6,7 @@ import { getExpenses, deleteExpense } from '@/services/expenses';
 import { getGroupBalances } from '@/services/balances';
 import AddExpenseDialog from '@/components/AddExpenseDialog';
 import ExpenseDetailDialog from '@/components/ExpenseDetailDialog';
+import SettleUpDialog from '@/components/SettleUpDialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -45,6 +46,7 @@ import {
   Link as LinkIcon,
   Plus,
   Calendar,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -67,6 +69,11 @@ export default function GroupDetailPage() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('expenses');
+
+  // Settle Up state
+  const [settleUpOpen, setSettleUpOpen] = useState(false);
+  const [settleUpBalance, setSettleUpBalance] = useState(null);
+  const [settleUpExpenseToEdit, setSettleUpExpenseToEdit] = useState(null);
 
   // Balances State
   const [balances, setBalances] = useState([]);
@@ -553,7 +560,7 @@ export default function GroupDetailPage() {
                   </p>
                 </div>
               ) : (
-                expenses.filter(e => e.type === 'expense').map((expense) => {
+                expenses.map((expense) => {
                   const splitCount = expense.distribution?.splits?.length || 0;
                   return (
                     <div
@@ -566,20 +573,34 @@ export default function GroupDetailPage() {
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         {/* Category Icon */}
-                        <div className="neu-flat flex items-center justify-center h-10 w-10 rounded-xl text-lg shrink-0">
-                          {{
-                            'Food & Drinks': '🍕', 'Transportation': '🚗', 'Accommodation': '🏨',
-                            'Shopping': '🛍️', 'Entertainment': '🎬', 'Utilities': '💡',
-                            'Rent': '🏠', 'Healthcare': '🏥', 'Education': '📚', 'Others': '📦',
-                          }[expense.category] || '📦'}
-                        </div>
+                        {expense.type === 'settlement' ? (
+                          <div className="neu-flat flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0 border border-emerald-500/20">
+                            <CheckCircle2 className="h-5 w-5" />
+                          </div>
+                        ) : (
+                          <div className="neu-flat flex items-center justify-center h-10 w-10 rounded-xl text-lg shrink-0">
+                            {{
+                              'Food & Drinks': '🍕', 'Transportation': '🚗', 'Accommodation': '🏨',
+                              'Shopping': '🛍️', 'Entertainment': '🎬', 'Utilities': '💡',
+                              'Rent': '🏠', 'Healthcare': '🏥', 'Education': '📚', 'Others': '📦',
+                            }[expense.category] || '📦'}
+                          </div>
+                        )}
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {expense.description || expense.category}
+                          <p className={`text-sm font-medium truncate ${expense.type === 'settlement' ? 'text-emerald-500 font-bold' : ''}`}>
+                            {expense.type === 'settlement' ? 'Payment' : (expense.description || expense.category)}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            Paid by {expense.paid_by === user?.id ? 'you' : expense.paid_by_name}
-                            {splitCount > 0 && ` · split ${splitCount} way${splitCount > 1 ? 's' : ''}`}
+                            {expense.type === 'settlement' ? (
+                              <>
+                                <span className="font-semibold text-foreground">{expense.paid_by === user?.id ? 'You' : expense.paid_by_name}</span> paid <span className="font-semibold text-foreground">{expense.distribution?.splits?.[0]?.user_name}</span>
+                              </>
+                            ) : (
+                              <>
+                                Paid by {expense.paid_by === user?.id ? 'you' : expense.paid_by_name}
+                                {splitCount > 0 && ` · split ${splitCount} way${splitCount > 1 ? 's' : ''}`}
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -608,8 +629,14 @@ export default function GroupDetailPage() {
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setExpenseToEdit(expense);
-                                setAddExpenseOpen(true);
+                                if (expense.type === 'settlement') {
+                                  setSettleUpExpenseToEdit(expense);
+                                  setSettleUpBalance(null);
+                                  setSettleUpOpen(true);
+                                } else {
+                                  setExpenseToEdit(expense);
+                                  setAddExpenseOpen(true);
+                                }
                               }}
                             >
                               <Receipt className="h-4 w-4 mr-2" /> Edit
@@ -726,12 +753,23 @@ export default function GroupDetailPage() {
                           </div>
                         </div>
 
-                        {/* Amount Badge */}
+                        {/* Amount Badge & Action */}
                         <div className="flex flex-col items-center justify-center shrink-0 px-2 lg:px-4">
-                          <div className="neu-flat flex items-center justify-center px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-sm lg:text-base font-bold text-primary mb-1">
+                          <div className="neu-flat flex items-center justify-center px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-sm lg:text-base font-bold text-primary mb-2">
                             {group?.currency} {balance.amount.toFixed(2)}
                           </div>
-                          <ArrowRight className="h-3 w-3 lg:h-4 lg:w-4 text-muted-foreground" />
+                          
+                          <Button 
+                            onClick={() => {
+                              setSettleUpExpenseToEdit(null);
+                              setSettleUpBalance(balance);
+                              setSettleUpOpen(true);
+                            }}
+                            size="sm" 
+                            className="h-7 px-3 text-[10px] uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)] transition-all rounded-lg font-bold border-none"
+                          >
+                            Settle Up
+                          </Button>
                         </div>
 
                         {/* Creditor (Is Owed) */}
@@ -787,10 +825,16 @@ export default function GroupDetailPage() {
         members={members}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        onEdit={(exp) => {
+        onEdit={(expense) => {
           setIsDetailOpen(false);
-          setExpenseToEdit(exp);
-          setAddExpenseOpen(true);
+          if (expense.type === 'settlement') {
+            setSettleUpExpenseToEdit(expense);
+            setSettleUpBalance(null);
+            setSettleUpOpen(true);
+          } else {
+            setExpenseToEdit(expense);
+            setAddExpenseOpen(true);
+          }
         }}
         onDelete={(exp) => {
           setIsDetailOpen(false);
@@ -872,6 +916,20 @@ export default function GroupDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <SettleUpDialog
+        open={settleUpOpen}
+        onOpenChange={(open) => {
+          setSettleUpOpen(open);
+          if (!open) setTimeout(() => setSettleUpExpenseToEdit(null), 300);
+        }}
+        groupId={id}
+        balance={settleUpBalance}
+        expenseToEdit={settleUpExpenseToEdit}
+        onSuccess={() => {
+          fetchGroupAndExpenses();
+          loadBalancesIfNeeded(true); // force reload balances
+        }}
+      />
     </div>
   );
 }

@@ -227,7 +227,8 @@ function validateAndCalculateExpense(body, memberIds) {
 export async function addExpense(req, res) {
   const { id: groupId } = req.params;
   const userId = req.user.id;
-  const { description, category, amount, paid_by, distribution, transaction_date } = req.body;
+  const { description, category, amount, paid_by, distribution, transaction_date, type } = req.body;
+  const isSettlement = type === 'settlement';
 
   const client = await pool.connect();
   try {
@@ -255,9 +256,9 @@ export async function addExpense(req, res) {
     // Insert transaction
     const { rows: [transaction] } = await client.query(
       `INSERT INTO transactions (group_id, description, category, amount, paid_by, distribution, type, created_by, transaction_date)
-       VALUES ($1, $2, $3, $4, $5, $6, 'expense', $7, $8)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [groupId, description || null, category || 'Others', parseFloat(amount), paid_by, finalDistribution, userId, transaction_date || new Date()]
+      [groupId, description || null, category || 'Others', parseFloat(amount), paid_by, finalDistribution, isSettlement ? 'settlement' : 'expense', userId, transaction_date || new Date()]
     );
 
     // Update balances
@@ -269,8 +270,8 @@ export async function addExpense(req, res) {
     // Log activity
     await client.query(
       `INSERT INTO activity_logs (group_id, user_id, transaction_id, type, data)
-       VALUES ($1, $2, $3, 'expense_added', $4)`,
-      [groupId, userId, transaction.id, JSON.stringify({
+       VALUES ($1, $2, $3, $4, $5)`,
+      [groupId, userId, transaction.id, isSettlement ? 'settlement_recorded' : 'expense_added', JSON.stringify({
         description: description || null,
         amount: parseFloat(amount),
         paid_by_name: payer.name,
@@ -462,8 +463,8 @@ export async function updateExpense(req, res) {
     // 4. Log activity
     await client.query(
       `INSERT INTO activity_logs (group_id, user_id, transaction_id, type, data)
-       VALUES ($1, $2, $3, 'expense_updated', $4)`,
-      [groupId, userId, expenseId, JSON.stringify({
+       VALUES ($1, $2, $3, $4, $5)`,
+      [groupId, userId, expenseId, oldTx.type === 'settlement' ? 'settlement_updated' : 'expense_updated', JSON.stringify({
         changes: {
           ...(amount !== undefined && parseFloat(amount) !== parseFloat(oldTx.amount) ? { amount: { old: parseFloat(oldTx.amount), new: parseFloat(amount) } } : {}),
           ...(description !== undefined && description !== oldTx.description ? { description: { old: oldTx.description, new: description } } : {}),

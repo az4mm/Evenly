@@ -17,6 +17,7 @@ import {
   Receipt,
   User,
   Info,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function ExpenseDetailDialog({
@@ -60,6 +61,8 @@ export default function ExpenseDetailDialog({
     }).format(amount);
   };
 
+  const isSettlement = expense.type === 'settlement';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="neu-raised-lg border-none rounded-3xl max-w-md w-[95vw] overflow-hidden p-0" style={{ background: 'var(--neu-bg)' }}>
@@ -68,12 +71,20 @@ export default function ExpenseDetailDialog({
           
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="neu-raised p-3 rounded-2xl bg-white/50">
-              <Receipt className="h-6 w-6 text-primary" />
+            <div className={`neu-raised p-3 rounded-2xl ${isSettlement ? 'bg-emerald-500/10' : 'bg-white/50'}`}>
+              {isSettlement ? (
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              ) : (
+                <Receipt className="h-6 w-6 text-primary" />
+              )}
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Expense Details</p>
-              <h2 className="text-xl font-bold truncate pr-8">{expense.description}</h2>
+              <p className={`text-xs font-semibold ${isSettlement ? 'text-emerald-500' : 'text-primary'} uppercase tracking-wider`}>
+                {isSettlement ? 'Settlement Details' : 'Expense Details'}
+              </p>
+              <h2 className="text-xl font-bold truncate pr-8">
+                {isSettlement ? 'Payment' : expense.description}
+              </h2>
             </div>
           </div>
 
@@ -81,8 +92,8 @@ export default function ExpenseDetailDialog({
             <span className="text-3xl font-black text-foreground">
               {formatCurrency(expense.amount)}
             </span>
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-none rounded-lg text-[10px] font-bold">
-              {expense.category || 'General'}
+            <Badge variant="secondary" className={`border-none rounded-lg text-[10px] font-bold ${isSettlement ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
+              {isSettlement ? 'Debt Settled' : (expense.category || 'General')}
             </Badge>
           </div>
         </div>
@@ -139,7 +150,9 @@ export default function ExpenseDetailDialog({
 
           {/* Splits Breakdown */}
           <div className="space-y-3 pb-2">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Split Details</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">
+              {isSettlement ? 'Paid To' : 'Split Details'}
+            </h3>
             <div className="neu-inset rounded-2xl p-1 overflow-hidden">
               <div className="max-h-[200px] overflow-y-auto px-2 py-1 space-y-2 scrollbar-hide">
                 {expense.distribution?.splits?.map((split, idx) => {
