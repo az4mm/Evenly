@@ -147,7 +147,7 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
             <CheckCircle2 className="h-6 w-6 text-white" />
           </div>
           <DialogTitle className="text-3xl font-bold tracking-tight text-center relative">
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/70 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] dark:drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/70 drop-shadow-sm dark:drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
               Settle Up
             </span>
           </DialogTitle>
@@ -221,10 +221,10 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
             <Button
               type="submit"
               disabled={loading || !amount || parseFloat(amount) <= 0}
-              className="w-full h-14 text-lg font-bold tracking-wide rounded-xl bg-emerald-500 hover:bg-emerald-600 focus:bg-emerald-600 text-white shadow-[0_4px_14px_rgba(16,185,129,0.4)] transition-all border-none"
+              className="w-full h-14 text-lg font-bold tracking-wide rounded-xl text-emerald-600 hover:text-emerald-500 shadow-[0_4px_14px_rgba(16,185,129,0.4)] transition-all border-none"
             >
               {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              {!loading && 'Record Payment'}
+              {!loading && (expenseToEdit ? 'Update Payment' : 'Record Payment')}
             </Button>
           </div>
         </form>

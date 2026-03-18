@@ -766,7 +766,7 @@ export default function GroupDetailPage() {
                               setSettleUpOpen(true);
                             }}
                             size="sm" 
-                            className="h-7 px-3 text-[10px] uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)] transition-all rounded-lg font-bold border-none"
+                            className="h-7 px-3 text-[10px] uppercase tracking-wider text-emerald-600 hover:text-emerald-500 transition-all rounded-lg font-bold border-none"
                           >
                             Settle Up
                           </Button>
