@@ -8,6 +8,7 @@ import { Users, ArrowRight, Plus, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import FooterLinks from '@/components/FooterLinks';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -188,6 +189,11 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Mobile Footer */}
+      <div className="md:hidden">
+        <FooterLinks />
       </div>
     </div>
   );

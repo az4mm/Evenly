@@ -20,6 +20,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import FooterLinks from '@/components/FooterLinks';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -151,10 +152,13 @@ export default function AppLayout({ children }) {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto w-full relative z-0 pb-20 md:pb-0">
+        <main className="flex-1 overflow-y-auto w-full relative z-0 pb-20 md:pb-12">
           {children}
         </main>
       </div>
+
+      {/* Fixed Desktop Footer */}
+      <FooterLinks className="hidden md:flex fixed bottom-0 left-0 right-0 z-40 py-3" />
 
       {/* ─── Mobile Bottom Nav (light neumorphic) ─── */}
       <nav

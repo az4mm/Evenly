@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Scissors, Sun, Moon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import FooterLinks from '@/components/FooterLinks';
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth();
@@ -99,6 +100,11 @@ export default function LoginPage() {
             By continuing, you agree to our terms of service.
           </p>
         </Card>
+      </div>
+
+      {/* Mobile Footer */}
+      <div className="md:hidden absolute bottom-4 left-0 right-0">
+        <FooterLinks />
       </div>
     </div>
   );
