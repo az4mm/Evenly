@@ -57,6 +57,12 @@ export async function createGroup(req, res) {
       [req.user.id, group.id]
     );
 
+    await db.query(
+      `INSERT INTO activity_logs (group_id, user_id, type, data)
+       VALUES ($1, $2, 'group_created', $3)`,
+      [group.id, req.user.id, { group_name: group.name, currency: group.currency }]
+    );
+
     return res.status(201).json({
       success: true,
       data: group,
@@ -190,6 +196,15 @@ export async function updateGroup(req, res) {
     const { rows } = await db.query(
       `UPDATE groups SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
       values
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs (group_id, user_id, type, data)
+       VALUES ($1, $2, 'group_updated', $3)`,
+      [req.params.id, req.user.id, {
+        ...(name !== undefined && { name: name.trim() }),
+        ...(currency !== undefined && { currency: currency.toUpperCase() })
+      }]
     );
 
     return res.json({
@@ -363,6 +378,12 @@ export async function joinGroup(req, res) {
       [req.user.id, group.id]
     );
 
+    await db.query(
+      `INSERT INTO activity_logs (group_id, user_id, type, data)
+       VALUES ($1, $2, 'member_joined', $3)`,
+      [group.id, req.user.id, { group_name: group.name }]
+    );
+
     return res.status(201).json({
       success: true,
       data: { ...group, my_role: 'member' },
@@ -428,6 +449,26 @@ export async function removeMember(req, res) {
       [targetUserId, req.params.id]
     );
 
+    // Fetch target user name for a readable log
+    const { rows: [targetUser] } = await db.query(
+      'SELECT name, email FROM users WHERE id = $1',
+      [targetUserId]
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs (group_id, user_id, type, data)
+       VALUES ($1, $2, $3, $4)`,
+      [
+        req.params.id, 
+        req.user.id, 
+        isSelf ? 'member_left' : 'member_removed', 
+        { 
+          target_user_id: targetUserId,
+          target_user_name: targetUser?.name || targetUser?.email || 'Unknown'
+        }
+      ]
+    );
+
     return res.json({
       success: true,
       data: { message: isSelf ? 'You have left the group' : 'Member removed successfully' },
@@ -479,6 +520,27 @@ export async function updateMemberRole(req, res) {
     await db.query(
       'UPDATE user_groups SET role = $1 WHERE user_id = $2 AND group_id = $3',
       [role, targetUserId, req.params.id]
+    );
+
+    // Fetch target user name for a readable log
+    const { rows: [targetUser] } = await db.query(
+      'SELECT name, email FROM users WHERE id = $1',
+      [targetUserId]
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs (group_id, user_id, type, data)
+       VALUES ($1, $2, $3, $4)`,
+      [
+        req.params.id, 
+        req.user.id, 
+        role === 'admin' ? 'member_promoted' : 'member_demoted', 
+        { 
+          target_user_id: targetUserId,
+          target_user_name: targetUser?.name || targetUser?.email || 'Unknown',
+          new_role: role
+        }
+      ]
     );
 
     return res.json({

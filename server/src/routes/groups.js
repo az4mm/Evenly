@@ -21,6 +21,7 @@ import {
   deleteExpense,
 } from '../controllers/expenseController.js';
 import { getGroupBalances } from '../controllers/balanceController.js';
+import { getGroupActivity } from '../controllers/activityController.js';
 
 const router = Router();
 
@@ -40,6 +41,9 @@ router.patch('/:id/members/:userId', authenticate, requireGroupAdmin, updateMemb
 
 // Balances
 router.get('/:id/balances', authenticate, requireGroupMember, getGroupBalances);
+
+// Activity Log
+router.get('/:id/activity', authenticate, requireGroupMember, getGroupActivity);
 
 // Expense CRUD
 router.post('/:id/expenses', authenticate, requireGroupMember, addExpense);

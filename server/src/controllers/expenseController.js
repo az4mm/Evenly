@@ -461,17 +461,21 @@ export async function updateExpense(req, res) {
     );
 
     // 4. Log activity
+    // Get payer name for the updated state
+    const { rows: [updatedPayer] } = await client.query('SELECT name FROM users WHERE id = $1', [newPaidBy]);
     await client.query(
       `INSERT INTO activity_logs (group_id, user_id, transaction_id, type, data)
        VALUES ($1, $2, $3, $4, $5)`,
       [groupId, userId, expenseId, oldTx.type === 'settlement' ? 'settlement_updated' : 'expense_updated', JSON.stringify({
+        description: description !== undefined ? description : oldTx.description,
+        amount: newAmount,
+        paid_by_name: updatedPayer?.name || null,
+        category: newCategory,
         changes: {
           ...(amount !== undefined && parseFloat(amount) !== parseFloat(oldTx.amount) ? { amount: { old: parseFloat(oldTx.amount), new: parseFloat(amount) } } : {}),
           ...(description !== undefined && description !== oldTx.description ? { description: { old: oldTx.description, new: description } } : {}),
           ...(category && category !== oldTx.category ? { category: { old: oldTx.category, new: category } } : {}),
-        },
-        snapshot_before: oldTx,
-        snapshot_after: updated
+        }
       })]
     );
 
@@ -523,12 +527,11 @@ export async function deleteExpense(req, res) {
       [groupId, userId, expenseId,
         oldTx.type === 'settlement' ? 'settlement_deleted' : 'expense_deleted',
         JSON.stringify({
-          snapshot: {
-            description: oldTx.description,
-            amount: parseFloat(oldTx.amount),
-            paid_by_name: payer.name,
-            distribution: oldTx.distribution
-          }
+          description: oldTx.description,
+          amount: parseFloat(oldTx.amount),
+          paid_by_name: payer.name,
+          category: oldTx.category,
+          distribution: oldTx.distribution
         })
       ]
     );
