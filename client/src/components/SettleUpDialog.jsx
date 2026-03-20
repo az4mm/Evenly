@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, ArrowRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowRight, Calendar as CalendarIcon, CheckCircle2, ChevronDown } from 'lucide-react';
 import { addExpense, updateExpense } from '@/services/expenses';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -32,10 +32,15 @@ function enforce2dp(value) {
   return match ? match[0] : '';
 }
 
-export default function SettleUpDialog({ open, onOpenChange, groupId, balance, expenseToEdit, onSuccess }) {
+export default function SettleUpDialog({ open, onOpenChange, groupId, balance, expenseToEdit, members = [], currentUser, onSuccess }) {
   const [amount, setAmount] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [memberPickerOpen, setMemberPickerOpen] = useState(false);
+
+  // Free-form mode: no preset balance and not editing
+  const isFreeForm = !balance && !expenseToEdit;
 
   useEffect(() => {
     if (open) {
@@ -45,25 +50,48 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
       } else if (balance) {
         setAmount(String(balance.amount));
         setTransactionDate(new Date());
+      } else {
+        // Free-form mode
+        setAmount('');
+        setSelectedMemberId('');
+        setTransactionDate(new Date());
       }
     } else {
       // Allow closing animation to run before resetting state
       setTimeout(() => {
         setAmount('');
+        setSelectedMemberId('');
         setLoading(false);
       }, 300);
     }
   }, [open, balance, expenseToEdit]);
 
-  if (!balance && !expenseToEdit) return null;
+  // In free-form mode, we still need at least currentUser
+  if (!isFreeForm && !balance && !expenseToEdit) return null;
 
-  const fromUser = expenseToEdit 
-    ? { id: expenseToEdit.paid_by, name: expenseToEdit.paid_by_name, profile_pic: expenseToEdit.paid_by_pic }
-    : balance?.from_user;
+  // Determine payer and receiver
+  let fromUser, toUser;
 
-  const toUser = expenseToEdit
-    ? { id: expenseToEdit.distribution.splits[0].user_id, name: expenseToEdit.distribution.splits[0].user_name, profile_pic: expenseToEdit.distribution.splits[0].user_profile_pic }
-    : balance?.to_user;
+  if (expenseToEdit) {
+    fromUser = { id: expenseToEdit.paid_by, name: expenseToEdit.paid_by_name, profile_pic: expenseToEdit.paid_by_pic };
+    toUser = { id: expenseToEdit.distribution.splits[0].user_id, name: expenseToEdit.distribution.splits[0].user_name, profile_pic: expenseToEdit.distribution.splits[0].user_profile_pic };
+  } else if (balance) {
+    fromUser = balance.from_user;
+    toUser = balance.to_user;
+  } else {
+    // Free-form: payer is always the current user
+    fromUser = currentUser ? { id: currentUser.id, name: currentUser.user_metadata?.name || currentUser.email, profile_pic: currentUser.user_metadata?.avatar_url } : { id: '', name: 'You' };
+    const selectedMember = members.find(m => m.user_id === selectedMemberId || m.id === selectedMemberId);
+    toUser = selectedMember
+      ? { id: selectedMember.user_id || selectedMember.id, name: selectedMember.user?.name || selectedMember.name || selectedMember.email, profile_pic: selectedMember.user?.profile_pic || selectedMember.profile_pic }
+      : null;
+  }
+
+  // Filter out self from member picker
+  const otherMembers = members.filter(m => {
+    const memberId = m.user_id || m.id;
+    return memberId !== (currentUser?.id || fromUser?.id);
+  });
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -71,6 +99,11 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
 
     if (!parsedAmount || parsedAmount <= 0) {
       toast.error('Please enter a valid amount');
+      return;
+    }
+
+    if (isFreeForm && !toUser) {
+      toast.error('Please select who you are paying');
       return;
     }
 
@@ -110,11 +143,11 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
     setLoading(false);
 
     if (res.success) {
-      toast.success(expenseToEdit ? 'Settlement updated' : 'Settlement recorded');
+      toast.success(expenseToEdit ? 'Payment updated' : 'Payment recorded');
       onSuccess();
       onOpenChange(false);
     } else {
-      toast.error(res.error?.message || 'Failed to save settlement');
+      toast.error(res.error?.message || 'Failed to save payment');
     }
   }
 
@@ -137,6 +170,78 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
     </div>
   );
 
+  // Member picker for free-form mode
+  const renderMemberPicker = () => (
+    <div className="flex flex-col items-center gap-2 p-3 neu-inset rounded-2xl w-full relative">
+      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Receiving</span>
+      <Popover open={memberPickerOpen} onOpenChange={setMemberPickerOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex flex-col items-center gap-2 w-full hover:bg-black/5 rounded-xl p-1 transition-colors"
+          >
+            {toUser ? (
+              <>
+                <Avatar className="h-12 w-12 border-2 border-[var(--neu-bg)] bg-[var(--neu-bg)] shadow-[4px_4px_8px_var(--neu-shadow-dark),-4px_-4px_8px_var(--neu-shadow-light)]">
+                  {toUser.profile_pic ? (
+                    <AvatarImage src={toUser.profile_pic} alt={toUser.name} />
+                  ) : (
+                    <AvatarFallback className="text-sm bg-primary/10 text-primary font-bold">
+                      {getInitials(toUser.name)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <span className="font-semibold text-sm text-center truncate w-full px-2 flex items-center justify-center gap-1">
+                  {toUser.name} <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="h-12 w-12 rounded-full border-2 border-dashed border-emerald-500/40 flex items-center justify-center bg-emerald-500/5">
+                  <span className="text-emerald-500 text-lg">?</span>
+                </div>
+                <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">
+                  Select member <ChevronDown className="h-3 w-3" />
+                </span>
+              </>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-1 border-none neu-raised shadow-xl rounded-2xl" align="center">
+          <div className="max-h-48 overflow-y-auto space-y-0.5">
+            {otherMembers.map(member => {
+              const mId = member.user_id || member.id;
+              const mName = member.user?.name || member.name || member.email;
+              const mPic = member.user?.profile_pic || member.profile_pic;
+              return (
+                <button
+                  key={mId}
+                  type="button"
+                  onClick={() => { setSelectedMemberId(mId); setMemberPickerOpen(false); }}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-2.5 rounded-xl text-left hover:bg-emerald-500/10 transition-colors',
+                    selectedMemberId === mId && 'bg-emerald-500/10 ring-1 ring-emerald-500/30'
+                  )}
+                >
+                  <Avatar className="h-8 w-8">
+                    {mPic && <AvatarImage src={mPic} alt={mName} />}
+                    <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                      {getInitials(mName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium truncate">{mName}</span>
+                </button>
+              );
+            })}
+            {otherMembers.length === 0 && (
+              <div className="py-4 text-center text-sm text-muted-foreground">No other members</div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden neu-raised-lg border-none">
@@ -148,7 +253,7 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
           </div>
           <DialogTitle className="text-3xl font-bold tracking-tight text-center relative">
             <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/70 drop-shadow-sm dark:drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-              Settle Up
+              {isFreeForm ? 'Record Payment' : 'Settle Up'}
             </span>
           </DialogTitle>
           <DialogDescription className="text-center mt-2 font-medium">
@@ -167,7 +272,7 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
               <span className="text-[9px] font-bold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full uppercase tracking-wider">Pays</span>
             </div>
 
-            {renderUser(toUser, "Receiving")}
+            {isFreeForm ? renderMemberPicker() : renderUser(toUser, "Receiving")}
           </div>
 
           <div className="space-y-5 pt-2">
@@ -220,7 +325,7 @@ export default function SettleUpDialog({ open, onOpenChange, groupId, balance, e
           <div className="pt-4">
             <Button
               type="submit"
-              disabled={loading || !amount || parseFloat(amount) <= 0}
+              disabled={loading || !amount || parseFloat(amount) <= 0 || (isFreeForm && !toUser)}
               className="w-full h-14 text-lg font-bold tracking-wide rounded-xl text-emerald-600 hover:text-emerald-500 shadow-[0_4px_14px_rgba(16,185,129,0.4)] transition-all border-none"
             >
               {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}

@@ -928,6 +928,24 @@ Each was themed with Neumorphic defaults:
 | ACT-02: Visible to all members | ✅ Activity tab in Group Detail |
 | ACT-03: Who/what/when/details | ✅ Timeline + detail modal |
 | ACT-04: All activity types | ✅ All types from PRD covered |
-| ACT-05: Pagination (P1) | ✅ Backend supports page/limit |
+| ACT-05: Pagination (P1) | ✅ Backend + frontend "Load More" |
 | ACT-06: Filter by type (P2) | ❌ Deferred (P2 priority) |
 
+---
+
+### 13.15 Record Payment Button & Settlement Modal Fix
+
+**Date**: 2026-03-21
+
+**Objective**: Allow users to record direct payments from the Expenses tab without needing an existing balance, and fix settlement-related labeling in detail modals.
+
+#### What was built
+- **Record Payment Button**: Added an emerald-themed "Record Payment" button next to "Add Expense" in the Expenses tab. Opens `SettleUpDialog` in free-form mode.
+- **Free-Form Payment Mode**: Extended `SettleUpDialog.jsx` to support a new mode where the user can select any group member as the payment recipient from a dropdown (member picker using `Popover`), enter any amount, and submit. When no `balance` prop is provided, the dialog switches to free-form mode with the title "Record Payment" instead of "Settle Up".
+- **Settlement Label Fix**: Updated `ExpenseDetailDialog.jsx` to show "Type: Settlement" (emerald badge) instead of "Split Method: exact" for settlement transactions. Updated `ActivityDetailDialog.jsx` to show "Settlement" instead of "Split · exact" for settlement activity entries.
+
+#### Files Modified
+- `client/src/components/SettleUpDialog.jsx` — Added free-form mode, member picker, `members`/`currentUser` props
+- `client/src/components/ExpenseDetailDialog.jsx` — Settlement-aware "Type" label
+- `client/src/components/ActivityDetailDialog.jsx` — Settlement-aware breakdown label
+- `client/src/pages/GroupDetailPage.jsx` — "Record Payment" button + passed new props to SettleUpDialog

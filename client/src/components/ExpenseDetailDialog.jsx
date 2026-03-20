@@ -118,10 +118,10 @@ export default function ExpenseDetailDialog({
             <div className="neu-inset p-3 rounded-2xl space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Layers className="h-3 w-3" />
-                <span className="text-[10px] font-bold uppercase tracking-tight">Split Method</span>
+                <span className="text-[10px] font-bold uppercase tracking-tight">{isSettlement ? 'Type' : 'Split Method'}</span>
               </div>
-              <Badge variant="outline" className="text-[10px] capitalize border-primary/20 bg-primary/5">
-                {expense.distribution?.method || 'Equal'}
+              <Badge variant="outline" className={`text-[10px] capitalize ${isSettlement ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-600' : 'border-primary/20 bg-primary/5'}`}>
+                {isSettlement ? 'Settlement' : (expense.distribution?.method || 'Equal')}
               </Badge>
             </div>
           </div>

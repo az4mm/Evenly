@@ -140,6 +140,10 @@ export default function GroupDetailPage() {
         return;
       }
 
+      if (expensesRes.success) {
+        setExpenses(expensesRes.data);
+      }
+
       if (activitiesRes.success) {
         setActivities(activitiesRes.data);
         if (activitiesRes.pagination) {
@@ -585,13 +589,27 @@ export default function GroupDetailPage() {
           {/* Expenses Tab */}
           <TabsContent value="expenses">
             <div className="mt-4 space-y-3">
-              {/* Add Expense Button */}
-              <Button onClick={() => {
-                setExpenseToEdit(null);
-                setAddExpenseOpen(true);
-              }} className="gap-2">
-                <Plus className="h-4 w-4" /> Add Expense
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={() => {
+                  setExpenseToEdit(null);
+                  setAddExpenseOpen(true);
+                }} className="gap-2">
+                  <Plus className="h-4 w-4" /> Add Expense
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSettleUpBalance(null);
+                    setSettleUpExpenseToEdit(null);
+                    loadMembersIfNeeded();
+                    setSettleUpOpen(true);
+                  }} 
+                  className="gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Record Payment
+                </Button>
+              </div>
 
               {expenses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -1180,6 +1198,8 @@ export default function GroupDetailPage() {
         groupId={id}
         balance={settleUpBalance}
         expenseToEdit={settleUpExpenseToEdit}
+        members={members}
+        currentUser={user}
         onSuccess={() => {
           fetchGroupAndExpenses();
           loadBalancesIfNeeded(true); // force reload balances

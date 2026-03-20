@@ -62,11 +62,11 @@ export default function ActivityDetailDialog({ activity, members = [], expenses 
         {d.category && <Row label="Category" value={d.category} />}
         {d.paid_by_name && <Row label="Paid by" value={d.paid_by_name} />}
 
-        {/* Split breakdown */}
+        {/* Split / Settlement breakdown */}
         {data.distribution?.splits && (
           <div className="neu-flat p-4 rounded-xl">
             <span className="text-muted-foreground font-medium mb-3 block capitalize">
-              Split · {data.distribution.method}
+              {rawType.includes('settlement') ? 'Settlement' : `Split · ${data.distribution.method}`}
             </span>
             <div className="space-y-2">
               {data.distribution.splits.map((s, i) => {
