@@ -257,10 +257,11 @@ The following tasks are pending and should be the starting point in a new chat:
    - ~~Auth flow (Google OAuth)~~ ✅ Done & tested end-to-end (see Section 13.1)
    - ~~Group CRUD + invite system~~ ✅ Done (see Section 13.3)
    - ~~UI Redesign (Neumorphism & Layout)~~ ✅ Done (see Section 13.7 & 13.8)
-   - **Transaction CRUD + distribution logic** ⬅️ WE ARE HERE
-   - Balance calculation
-   - Activity logging
-   - Remaining UI integration
+   - ~~Transaction CRUD + distribution logic~~ ✅ Done (see Section 13.5, 13.11)
+   - ~~Balance calculation~~ ✅ Done (integrated into expenseController)
+   - ~~Activity logging~~ ✅ Done (see Section 13.14)
+   - ~~Settlement feature~~ ✅ Done (see Section 13.13)
+   - **Remaining UI integration / polish** ⬅️ WE ARE HERE
 
 ---
 
@@ -830,3 +831,103 @@ Each was themed with Neumorphic defaults:
 - **Avatar Dropdown**: Rebuilt the "Paid by" dropdown mechanism into a custom Neumorphic `<Select>` trigger that accurately displays user Avatars inline alongside names.
 - **Contextual Data in Expense Rows**: Modified `GroupDetailPage.jsx` to parse the `created_at` timestamp and display exact times alongside dates (e.g., "16 Mar at 06:59 pm"). Added logic to conditionally render a friendly "Paid by you" string if the expense payer matches the currently authenticated user.
 - **3D Neumorphic Text**: Created a `.neu-text-raised` CSS utility with dark and light text-shadow variables. Applied this 3D raised text effect to the 'Evenly' branding logo, the Dashboard user greeting, and Group Detail headlines.
+
+---
+
+### 13.13 Settlement Feature Integration
+
+**Date**: 2026-03-19
+
+**Objective**: Implement the ability for users to record payments and settle their debts within the application.
+
+#### What was built
+- **Backend Reusability**: Validated that `expenseController.js` natively supports `type: 'settlement'` with an exact split mapping to perfectly reverse mathematical balances without needing dedicated settlement database endpoints. 
+- **SettleUpDialog**: Built a premium Neumorphic modal (`SettleUpDialog.jsx`) for tracking repayments with clear visual indicators of who is paying whom. Includes a dynamic "edit mode" safely separated from complex multi-split expense editing.
+- **UI Integration**: Added an emerald-themed 'Settle Up' quick action to individual debts on the Balances page. 
+- **Feed Visibility**: Removed generic expense filtering from the group feed to allow Settlements to display natively, styling them distinctly with an emerald Check icon and explicit "[User] paid [User]" transaction text.
+- **Light Theme Revisions**: Fixed custom Neumorphic `<Button>` classes and title drop-shadows that were causing text overrides and muddy aesthetics, achieving perfect readability in Light Mode.
+
+---
+
+### 13.14 Activity Log — Full Implementation & UX Polish
+
+**Date**: 2026-03-18 to 2026-03-21
+
+**Objective**: Implement the complete Activity Log feature (ACT-01 through ACT-05 from PRD), including backend logging for all 13 activity types, a frontend timeline in the Group Detail page, a detail modal for rich entries, and multiple rounds of bug fixes and UX improvements.
+
+#### What was built
+
+**Backend — Activity Logging:**
+- **`activityController.js`** (NEW) — `getGroupActivity` handler that fetches paginated activity logs for a group, with JOIN to `users` table and optional `transaction_id` link.
+- **`expenseController.js`** — Added activity logging calls for all expense/settlement CRUD:
+  - `expense_added` — logs description, amount, category, paid_by_name, distribution
+  - `expense_updated` — logs before/after changes diff + snapshot_after
+  - `expense_deleted` — logs snapshot of deleted expense
+  - `settlement_recorded` / `settlement_updated` / `settlement_deleted` — same pattern
+- **`groupController.js`** — Added activity logging calls for:
+  - `group_created` — logs group_name, currency
+  - `group_updated` — logs changes diff
+  - `member_joined` — logs group_name (fired when user joins via invite code)
+  - `member_left` — logs target_user_name
+  - `member_removed` — logs target_user_name
+  - `member_promoted` / `member_demoted` — logs target_user_name, new_role
+- **Route**: `GET /api/groups/:id/activity` — paginated (default 50 per page)
+
+**Frontend — Timeline (`GroupDetailPage.jsx`):**
+- Activity tab shows a chronological timeline of all group events
+- Each entry displays: icon (color-coded by type), actor name ("You" if self), action text, timestamp
+- **Inline amounts**: Expense entries show `added "Dinner" · ₹500.00`, settlement entries show `You paid Azam ₹50.00` — all in the main text, no need to click
+- **Financial impact sub-text**: Shows colored impact lines like `You owe ₹50.00` (orange), `You get back ₹200.00` (emerald), `You paid ₹500.00` (muted)
+- **Settlement fallback**: When the linked transaction was deleted, falls back to data stored in the activity log payload to still show payer/receiver/amount
+- **Legacy data normalization**: Handles older log entries that stored data in nested `data.snapshot` instead of flat top-level fields
+
+**Frontend — Detail Modal (`ActivityDetailDialog.jsx`):**
+- Shows structured details when clicking expense/settlement/group_updated entries
+- Expense details: description, amount (currency-formatted), category, paid by, split breakdown (method + per-person amounts)
+- Settlement details: payer, receiver, amount
+- Update diffs: "What changed" section showing `field: old → new` with strikethrough
+- Null-safe formatting: shows `(empty)` instead of literal `null` for empty values
+- Name resolution: resolves user IDs to names using group members list, then expense splits as fallback
+
+**UX Improvements (2026-03-21):**
+- **Selective detail modals**: Only expense, settlement, and group_updated entries open the detail modal on click. Simple entries (group_created, member_joined/left/removed/promoted/demoted) do NOT open a modal — all their info is already visible in the timeline.
+- **Visual cue**: Clickable entries show `cursor-pointer`, hover highlight, and a `›` chevron (ChevronRight icon, opacity-0 → opacity-100 on hover). Non-clickable entries appear static.
+- **Inline settlement amounts**: Settlement amounts embedded directly in the main text (`You paid Azam ₹50.00`) instead of as a separate "Settlement: ₹50.00" sub-line.
+
+#### Bug Fixes (11 total)
+1. `performed action` fallback text → proper type-specific text for all 13 types
+2. Expense entries showed raw type string → now show description + category
+3. Settlement entries showed generic `recorded a settlement` → now show `Payer paid Receiver ₹Amount`
+4. Settlement payer/receiver were swapped → fixed to show actual payer and actual receiver
+5. Member events showed `a member` → now show actual target user name from `data.target_user_name`
+6. `fmt` variable used before declaration → moved to before conditional blocks
+7. Detail modal showed `null` for empty values → now shows `(empty)`
+8. Detail modal hardcoded `₹` symbol → now uses `Intl.NumberFormat` with group currency
+9. `expense_deleted` with null description → falls back to amount/payer for context
+10. `ReferenceError: UserPlus is not defined` crash → added missing `UserPlus` import from lucide-react (this caused the entire page to crash for any group with a `member_joined` log)
+11. Group_updated changes block showed literal `null` → applied same `fmt` helper
+
+#### Files Created
+- `server/src/controllers/activityController.js`
+- `server/src/routes/activity.js`
+- `client/src/components/ActivityDetailDialog.jsx`
+
+#### Files Modified
+- `server/src/controllers/expenseController.js` — activity log inserts for all expense/settlement CRUD
+- `server/src/controllers/groupController.js` — activity log inserts for all group/member events
+- `server/src/routes/groups.js` — mounted activity route
+- `server/index.js` — registered activity routes
+- `client/src/pages/GroupDetailPage.jsx` — Activity tab implementation, timeline rendering, selective modals, inline amounts, ChevronRight import
+- `client/src/services/groups.js` — `getGroupActivity()` API function
+
+#### PRD Compliance
+
+| Requirement | Status |
+|---|---|
+| ACT-01: All group activities logged | ✅ All 13 types |
+| ACT-02: Visible to all members | ✅ Activity tab in Group Detail |
+| ACT-03: Who/what/when/details | ✅ Timeline + detail modal |
+| ACT-04: All activity types | ✅ All types from PRD covered |
+| ACT-05: Pagination (P1) | ✅ Backend supports page/limit |
+| ACT-06: Filter by type (P2) | ❌ Deferred (P2 priority) |
+

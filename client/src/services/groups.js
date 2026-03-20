@@ -90,3 +90,10 @@ export async function updateMemberRole(groupId, userId, role) {
   });
   return res.json();
 }
+
+export async function getActivityLogs(groupId, page = 1) {
+  const res = await fetch(`${API_URL}/api/groups/${groupId}/activity?page=${page}`, {
+    headers: await authHeaders(),
+  });
+  return res.json();
+}
