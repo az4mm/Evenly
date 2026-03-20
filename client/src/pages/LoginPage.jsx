@@ -102,8 +102,8 @@ export default function LoginPage() {
         </Card>
       </div>
 
-      {/* Mobile Footer */}
-      <div className="md:hidden absolute bottom-4 left-0 right-0">
+      {/* Footer */}
+      <div className="absolute bottom-4 left-0 right-0">
         <FooterLinks />
       </div>
     </div>
