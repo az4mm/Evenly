@@ -949,3 +949,94 @@ Each was themed with Neumorphic defaults:
 - `client/src/components/ExpenseDetailDialog.jsx` — Settlement-aware "Type" label
 - `client/src/components/ActivityDetailDialog.jsx` — Settlement-aware breakdown label
 - `client/src/pages/GroupDetailPage.jsx` — "Record Payment" button + passed new props to SettleUpDialog
+
+---
+
+### 13.16 GroupDetailPage Modular Refactor
+
+**Date**: 2026-05-23
+
+**Objective**: Decompose the massive `GroupDetailPage.jsx` (1,211 lines) into smaller, maintainable sub-components to improve code organization and developer experience.
+
+#### What was built
+- **`MembersTab.jsx`** (`client/src/components/group/MembersTab.jsx`): Member list with admin actions (promote, demote, remove), role badges, avatar display, and skeleton loading state.
+- **`ExpensesTab.jsx`** (`client/src/components/group/ExpensesTab.jsx`): Expense list with category icons (emoji), settlement display, action buttons (Add Expense, Record Payment), and per-expense dropdown menus (Edit, Delete).
+- **`BalancesTab.jsx`** (`client/src/components/group/BalancesTab.jsx`): Personal balance summary widget (You Are Owed / You Owe), debtor→creditor balance cards with Settle Up buttons, empty state, and skeleton loading.
+- **`ActivityTab.jsx`** (`client/src/components/group/ActivityTab.jsx`): Activity timeline with icon/color mapping for all 13 activity types, financial impact text (owe/get back), settlement name resolution (multi-source fallback), "Load Older Activity" pagination button.
+
+#### Architecture
+- All sub-components receive data and callbacks as props — no direct API calls or state management inside them.
+- `GroupDetailPage.jsx` retains ownership of all state, API calls, and event handlers.
+- Each `<TabsContent>` now renders a single clean component invocation instead of 50-150 lines of inline JSX.
+
+#### Result
+- `GroupDetailPage.jsx` reduced from **1,211 lines → ~716 lines** (41% reduction).
+- Tab rendering logic is now isolated and independently testable.
+
+#### Files Created
+- `client/src/components/group/MembersTab.jsx`
+- `client/src/components/group/ExpensesTab.jsx`
+- `client/src/components/group/BalancesTab.jsx`
+- `client/src/components/group/ActivityTab.jsx`
+
+#### Files Modified
+- `client/src/pages/GroupDetailPage.jsx` — Replaced inline tab content with imported sub-components, cleaned up unused imports (`format`, `Shield`, `ShieldOff`, `UserPlus`, `Plus`, `Calendar`, `CheckCircle2`, `Settings`, `LogOut`, `ChevronRight`, `Loader2`, `ArrowRight`).
+
+---
+
+### 13.17 Spline 3D Login Page
+
+**Date**: 2026-05-23
+
+**Objective**: Replace the static neumorphic login card with an immersive, full-screen interactive 3D login experience using Spline.
+
+#### What was built
+- **Full-screen Spline 3D scene** as the entire login page background.
+- **Interactive login trigger**: Clicking the 3D object named `"robot"` in the Spline scene fires `signInWithGoogle()` directly — the 3D object IS the login button.
+- **Brand overlay**: Glassmorphic floating elements at top — Scissors logo icon → "Evenly" title → tagline: *"your friends owe you. we'll prove it."*
+- **Loading UX**: Existing scissors spinner preserved during auth state loading. Separate scene loader shown with "Loading experience..." text while Spline scene downloads. Smooth opacity fade-in when scene is ready.
+- **Signing-in indicator**: Glassmorphic pill at bottom shows "Redirecting to Google..." with spinner after robot click.
+- **Footer**: `FooterLinks` component rendered at bottom with dark glass style overrides.
+
+#### Technical Details
+- **Dependencies**: `@splinetool/react-spline` (v4.1.0) + `@splinetool/runtime` (v1.12.95)
+- **Scene URL**: `https://prod.spline.design/Xwn3xmA7guz32i3A/scene.splinecode`
+- **Lazy loading**: Spline component is lazy-loaded via `React.lazy()` per skill best practices (~500KB+ runtime)
+- **Event wiring**: `onLoad` callback → `splineApp.addEventListener('mouseDown', ...)` → checks `e.target.name === 'robot'`
+- **Cursor**: `mouseHover` event sets `document.body.style.cursor = 'pointer'` for interactive objects
+- **Design system**: Login page uses its own dark cinematic CSS (`.login-*` classes) with glassmorphism (`rgba white + backdrop-filter blur`) instead of the neumorphic system, so overlays blend naturally with the 3D scene's lighting.
+
+#### Spline Skill Reference
+- Skill file located at: `.agent/spline-3d-integration-skill (1)/spline-3d-integration/SKILL.md`
+- Followed patterns from: React lazy-loading, `onLoad` callback, `addEventListener` for click detection
+
+#### Files Created/Modified
+- `client/src/pages/LoginPage.jsx` — Complete rewrite (old neumorphic card → Spline 3D scene)
+- `client/src/index.css` — Added `.login-scene-root`, `.login-loader`, `.login-brand`, `.login-signing-in`, `.login-footer` styles with glassmorphic dark glass treatment
+
+---
+
+### 13.18 Dark Theme Overhaul
+
+**Date**: 2026-05-23
+
+**Objective**: Update the dark theme to use a near-black palette inspired by the Spline login scene's aesthetic, replacing the previous dark slate.
+
+#### What Changed
+
+| Token | Old Value | New Value |
+|-------|-----------|-----------|
+| `--neu-bg` | `#2d3748` (dark slate) | `#141419` (near-black) |
+| `--neu-shadow-dark` | `#202733` | `#0a0a0f` |
+| `--neu-shadow-light` | `#3a475d` | `#1e1e25` |
+| `--background` | `oklch(0.35 ...)` | `oklch(0.15 ...)` |
+| `--primary` | `oklch(0.60 ...)` | `oklch(0.65 ...)` (slightly brighter for contrast) |
+| `--sidebar-bg` | `#202733` | `#0e0e13` |
+
+#### Design Rationale
+- The neumorphic shadow spread was tuned so light/dark shadows remain visible at this much darker level — subtle but present, giving an "embossed in obsidian" feel.
+- Primary color bumped slightly brighter (`0.60 → 0.65`) to maintain readability against the darker surface.
+- Muted foreground dimmed (`0.70 → 0.60`) to keep hierarchy clear.
+
+#### Files Modified
+- `client/src/index.css` — `.dark` CSS custom properties block
