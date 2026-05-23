@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getGroup, getMembers, removeMember, updateMemberRole, deleteGroup, getActivityLogs } from '@/services/groups';
@@ -9,6 +8,13 @@ import AddExpenseDialog from '@/components/AddExpenseDialog';
 import ExpenseDetailDialog from '@/components/ExpenseDetailDialog';
 import SettleUpDialog from '@/components/SettleUpDialog';
 import ActivityDetailDialog from '@/components/ActivityDetailDialog';
+
+// Tab Sub-Components
+import MembersTab from '@/components/group/MembersTab';
+import ExpensesTab from '@/components/group/ExpensesTab';
+import BalancesTab from '@/components/group/BalancesTab';
+import ActivityTab from '@/components/group/ActivityTab';
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -32,28 +38,18 @@ import EditGroupDialog from '@/components/EditGroupDialog';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
-  ArrowRight,
   Copy,
   Check,
   MoreVertical,
   Pencil,
-  Shield,
   UserMinus,
-  ShieldOff,
   Trash2,
-  UserPlus,
   Users,
   Receipt,
   Scale,
   Activity,
   Link as LinkIcon,
   Plus,
-  Calendar,
-  CheckCircle2,
-  Settings,
-  LogOut,
-  ChevronRight,
-  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -506,570 +502,79 @@ export default function GroupDetailPage() {
               <Users className="h-4 w-4" /> <span className="hidden sm:inline">Members</span>
             </TabsTrigger>
           </TabsList>
-          {/* Members Tab */}
           <TabsContent value="members">
-            <div className="space-y-3 mt-4">
-              {/* Removed memberError rendering since we use Toasts now */}
-              {membersLoading ? (
-                // Neumorphic Members Skeleton
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="neu-raised flex items-center justify-between rounded-2xl p-4 animate-pulse">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-muted rounded-full" />
-                        <div className="space-y-2">
-                          <div className="h-4 w-32 bg-muted rounded-md" />
-                          <div className="h-3 w-40 bg-muted/60 rounded-md" />
-                        </div>
-                      </div>
-                      <div className="h-6 w-16 bg-muted/60 rounded-lg" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                members.map((member) => {
-                  const isSelf = member.id === user?.id;
-                  const isMemberCreator = member.id === group.created_by;
-
-                  return (
-                    <div key={member.id} className="neu-raised flex items-center justify-between rounded-2xl p-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar>
-                          {member.profile_pic && <AvatarImage src={member.profile_pic} alt={member.name} />}
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                            {getInitials(member.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {member.name || member.email}
-                            {isSelf && <span className="text-muted-foreground ml-1 text-xs">(you)</span>}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">{member.email}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`neu-flat text-xs px-2.5 py-1 rounded-lg ${
-                          member.role === 'admin' ? 'text-primary font-semibold' : 'text-muted-foreground'
-                        }`}>
-                          {member.role === 'admin' ? 'Admin' : 'Member'}
-                        </span>
-
-                        {isAdmin && !isSelf && !isMemberCreator && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md neu-button text-muted-foreground hover:text-foreground transition-all outline-none">
-                              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {member.role === 'member' ? (
-                                <DropdownMenuItem onClick={() => handlePromote(member.id)}>
-                                  <Shield className="h-4 w-4 mr-2" /> Promote to Admin
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem onClick={() => handleDemote(member.id)}>
-                                  <ShieldOff className="h-4 w-4 mr-2" /> Demote to Member
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem variant="destructive" onClick={() => handleRemoveMember(member.id)}>
-                                <UserMinus className="h-4 w-4 mr-2" /> Remove from Group
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <MembersTab 
+              members={members}
+              membersLoading={membersLoading}
+              currentUserId={user?.id}
+              groupCreatedBy={group.created_by}
+              isAdmin={isAdmin}
+              onPromote={handlePromote}
+              onDemote={handleDemote}
+              onRemove={handleRemoveMember}
+            />
           </TabsContent>
 
-          {/* Expenses Tab */}
           <TabsContent value="expenses">
-            <div className="mt-4 space-y-3">
-              {/* Action Buttons */}
-              <div className="flex gap-2 flex-wrap">
-                <Button onClick={() => {
-                  setExpenseToEdit(null);
-                  setAddExpenseOpen(true);
-                }} className="gap-2">
-                  <Plus className="h-4 w-4" /> Add Expense
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setSettleUpBalance(null);
-                    setSettleUpExpenseToEdit(null);
-                    loadMembersIfNeeded();
-                    setSettleUpOpen(true);
-                  }} 
-                  className="gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-500"
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Record Payment
-                </Button>
-              </div>
-
-              {expenses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
-                    <Receipt className="h-7 w-7 text-primary" />
-                  </div>
-                  <p className="font-medium mb-1">No expenses yet</p>
-                  <p className="text-sm text-muted-foreground max-w-xs">
-                    Add your first expense to start tracking who owes what.
-                  </p>
-                </div>
-              ) : (
-                expenses.map((expense) => {
-                  const splitCount = expense.distribution?.splits?.length || 0;
-                  return (
-                    <div
-                      key={expense.id}
-                      onClick={() => {
-                        setSelectedExpense(expense);
-                        setIsDetailOpen(true);
-                      }}
-                      className="neu-raised rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-black/5 active:scale-[0.98] transition-all group/card"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* Category Icon */}
-                        {expense.type === 'settlement' ? (
-                          <div className="neu-flat flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0 border border-emerald-500/20">
-                            <CheckCircle2 className="h-5 w-5" />
-                          </div>
-                        ) : (
-                          <div className="neu-flat flex items-center justify-center h-10 w-10 rounded-xl text-lg shrink-0">
-                            {{
-                              'Food & Drinks': '🍕', 'Transportation': '🚗', 'Accommodation': '🏨',
-                              'Shopping': '🛍️', 'Entertainment': '🎬', 'Utilities': '💡',
-                              'Rent': '🏠', 'Healthcare': '🏥', 'Education': '📚', 'Others': '📦',
-                            }[expense.category] || '📦'}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className={`text-sm font-medium truncate ${expense.type === 'settlement' ? 'text-emerald-500 font-bold' : ''}`}>
-                            {expense.type === 'settlement' ? 'Payment' : (expense.description || expense.category)}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {expense.type === 'settlement' ? (
-                              <>
-                                <span className="font-semibold text-foreground">{expense.paid_by === user?.id ? 'You' : expense.paid_by_name}</span> paid <span className="font-semibold text-foreground">{expense.distribution?.splits?.[0]?.user_name}</span>
-                              </>
-                            ) : (
-                              <>
-                                Paid by {expense.paid_by === user?.id ? 'you' : expense.paid_by_name}
-                                {splitCount > 0 && ` · split ${splitCount} way${splitCount > 1 ? 's' : ''}`}
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 flex items-center gap-2">
-                        <div>
-                          <p className="text-sm font-semibold text-primary">
-                            {group?.currency} {parseFloat(expense.amount).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-muted-foreground flex items-center justify-end gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(expense.transaction_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                            {' at '}
-                            {new Date(expense.created_at || expense.transaction_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                        {/* Delete dropdown */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            onClick={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            className="h-7 w-7 p-0 border-none inline-flex items-center justify-center rounded-md neu-button text-muted-foreground hover:text-foreground transition-all outline-none"
-                          >
-                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (expense.type === 'settlement') {
-                                  setSettleUpExpenseToEdit(expense);
-                                  setSettleUpBalance(null);
-                                  setSettleUpOpen(true);
-                                } else {
-                                  setExpenseToEdit(expense);
-                                  setAddExpenseOpen(true);
-                                }
-                              }}
-                            >
-                              <Receipt className="h-4 w-4 mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                confirmAction(
-                                  'Delete Expense',
-                                  `Are you sure you want to delete "${expense.description || expense.category}"? This will reverse all balance effects.`,
-                                  async () => {
-                                    const res = await deleteExpense(id, expense.id);
-                                    if (res.success) {
-                                      toast.success('Expense deleted');
-                                      setIsDetailOpen(false);
-                                      fetchGroupAndExpenses();
-                                    } else toast.error(res.error?.message || 'Failed to delete expense');
-                                  },
-                                  true
-                                );
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <ExpensesTab 
+              expenses={expenses}
+              group={group}
+              currentUserId={user?.id}
+              onAddExpense={() => {
+                setExpenseToEdit(null);
+                setAddExpenseOpen(true);
+              }}
+              onRecordPayment={() => {
+                setSettleUpBalance(null);
+                setSettleUpExpenseToEdit(null);
+                loadMembersIfNeeded();
+                setSettleUpOpen(true);
+              }}
+              onExpenseClick={(expense) => {
+                setSelectedExpense(expense);
+                setIsDetailOpen(true);
+              }}
+              onEditExpense={(expense) => {
+                setSelectedExpense(expense);
+                setIsDetailOpen(true);
+              }}
+              onDeleteExpense={(expense) => {
+                setSelectedExpense(expense);
+                setIsDetailOpen(true);
+              }}
+            />
           </TabsContent>
 
-          {/* Balances Tab */}
           <TabsContent value="balances">
-            <div className="mt-4 space-y-4">
-              
-              {/* Personal Group Summary */}
-              {!balancesLoading && balanceSummary && (
-                <div className="neu-inset rounded-2xl p-5 grid grid-cols-2 gap-4 mb-2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">You Are Owed</span>
-                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                      {group?.currency} {balanceSummary.user_is_owed.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border-l border-border/50 pl-4">
-                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">You Owe</span>
-                    <span className="text-xl font-bold text-red-600 dark:text-red-400">
-                      {group?.currency} {balanceSummary.user_owes.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {balancesLoading ? (
-                /* Balances Skeleton */
-                <div className="space-y-3">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="neu-raised rounded-2xl p-4 flex items-center justify-between animate-pulse">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-muted rounded-full" />
-                        <div className="space-y-2">
-                          <div className="h-4 w-32 bg-muted rounded-md" />
-                          <div className="h-3 w-20 bg-muted/60 rounded-md" />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-muted rounded-md" />
-                        <div className="h-10 w-10 bg-muted rounded-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : balances.length === 0 ? (
-                /* Empty state */
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
-                    <Scale className="h-7 w-7 text-primary" />
-                  </div>
-                  <p className="font-medium mb-1">No balances yet</p>
-                  <p className="text-sm text-muted-foreground max-w-xs">
-                    Once expenses are added and split, you will see who owes whom here.
-                  </p>
-                </div>
-              ) : (
-                /* Balances List */
-                <div className="space-y-3">
-                  {balances.map((balance, index) => {
-                    const amInvolved = balance.from_user.id === user?.id || balance.to_user.id === user?.id;
-                    const iAmOwed = balance.to_user.id === user?.id;
-                    
-                    return (
-                      <div 
-                        key={`${balance.from_user.id}-${balance.to_user.id}-${index}`} 
-                        className={`neu-raised rounded-2xl p-4 flex items-center justify-between gap-4 transition-all ${amInvolved ? 'border-l-4 ' + (iAmOwed ? 'border-emerald-500' : 'border-red-500') : ''}`}
-                      >
-                        {/* Debtor (Owes) */}
-                        <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
-                          <Avatar className="h-8 w-8 lg:h-10 lg:w-10 ring-2 ring-red-500/20">
-                            {balance.from_user.profile_pic && <AvatarImage src={balance.from_user.profile_pic} alt={balance.from_user.name} />}
-                            <AvatarFallback className="text-[10px] lg:text-sm bg-muted text-muted-foreground">
-                              {getInitials(balance.from_user.name || balance.from_user.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm lg:text-base font-medium truncate">
-                              {balance.from_user.id === user?.id ? 'You' : (balance.from_user.name || balance.from_user.email)}
-                            </p>
-                            <p className="text-[10px] lg:text-xs text-muted-foreground">Owes</p>
-                          </div>
-                        </div>
-
-                        {/* Amount Badge & Action */}
-                        <div className="flex flex-col items-center justify-center shrink-0 px-2 lg:px-4">
-                          <div className="neu-flat flex items-center justify-center px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg text-sm lg:text-base font-bold text-primary mb-2">
-                            {group?.currency} {balance.amount.toFixed(2)}
-                          </div>
-                          
-                          <Button 
-                            onClick={() => {
-                              setSettleUpExpenseToEdit(null);
-                              setSettleUpBalance(balance);
-                              setSettleUpOpen(true);
-                            }}
-                            size="sm" 
-                            className="h-7 px-3 text-[10px] uppercase tracking-wider text-emerald-600 hover:text-emerald-500 transition-all rounded-lg font-bold border-none"
-                          >
-                            Settle Up
-                          </Button>
-                        </div>
-
-                        {/* Creditor (Is Owed) */}
-                        <div className="flex items-center justify-end gap-2 lg:gap-3 flex-1 min-w-0 text-right">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm lg:text-base font-medium truncate">
-                              {balance.to_user.id === user?.id ? 'You' : (balance.to_user.name || balance.to_user.email)}
-                            </p>
-                            <p className="text-[10px] lg:text-xs text-muted-foreground">Get Back</p>
-                          </div>
-                          <Avatar className="h-8 w-8 lg:h-10 lg:w-10 ring-2 ring-emerald-500/20">
-                            {balance.to_user.profile_pic && <AvatarImage src={balance.to_user.profile_pic} alt={balance.to_user.name} />}
-                            <AvatarFallback className="text-[10px] lg:text-sm bg-emerald-500/10 text-emerald-600">
-                              {getInitials(balance.to_user.name || balance.to_user.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <BalancesTab 
+              balances={balances}
+              balanceSummary={balanceSummary}
+              balancesLoading={balancesLoading}
+              group={group}
+              currentUserId={user?.id}
+              onSettleUp={(balance) => {
+                setSettleUpExpenseToEdit(null);
+                setSettleUpBalance(balance);
+                setSettleUpOpen(true);
+              }}
+            />
           </TabsContent>
 
-          {/* Activity Tab */}
           <TabsContent value="activity">
-            <div className="mt-4 space-y-4">
-              {activities.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="neu-raised flex items-center justify-center w-14 h-14 rounded-2xl mb-4">
-                    <Activity className="h-7 w-7 text-primary" />
-                  </div>
-                  <p className="font-medium mb-1">No activity yet</p>
-                  <p className="text-sm text-muted-foreground max-w-xs">
-                    Group activity will be logged here.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {activities.map((activity, index) => {
-                    let Icon = Activity;
-                    let text = activity.type ? activity.type.replace(/_/g, ' ') : 'performed an action';
-                    let iconColor = 'text-primary';
-                    let impactText = null;
-                    let impactColor = 'text-muted-foreground';
-                    let actionSubject = null;
-                    // Only open detail modal for activities that have meaningful extra data
-                    const hasDetail = ['expense_added', 'expense_updated', 'expense_deleted', 'settlement_recorded', 'settlement_updated', 'settlement_deleted', 'group_updated'].includes(activity.type);
-
-                    const data = activity.data || {};
-                    const isSelf = activity.user?.id === user?.id;
-                    const actorName = isSelf ? 'You' : activity.user?.name;
-
-                    // Helper: resolve description from multiple possible legacy payload locations
-                    const resolveDesc = () => {
-                      return data.description
-                        || data.category
-                        || data.snapshot?.description
-                        || data.snapshot?.category
-                        || data.snapshot_after?.description
-                        || data.snapshot_after?.category
-                        || data.changes?.description?.new
-                        || null;
-                    };
-
-                    const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: group?.currency || 'INR' });
-
-                    if (activity.type === 'expense_added') {
-                      Icon = Receipt;
-                      const desc = resolveDesc();
-                      const amt = data.amount || data.snapshot?.amount;
-                      text = desc ? `added "${desc}"` : 'added an expense';
-                      if (amt) text += ` · ${fmt.format(amt)}`;
-                    }
-                    else if (activity.type === 'expense_updated') {
-                      Icon = Receipt;
-                      const desc = resolveDesc();
-                      const amt = data.amount || data.snapshot_after?.amount || data.snapshot?.amount;
-                      text = desc ? `updated "${desc}"` : 'updated an expense';
-                      if (amt) text += ` · ${fmt.format(amt)}`;
-                    }
-                    else if (activity.type === 'expense_deleted') {
-                      Icon = Trash2;
-                      const desc = resolveDesc();
-                      if (desc) {
-                        text = `deleted "${desc}"`;
-                      } else {
-                        // Last resort: show amount or payer for context
-                        const delAmount = data.amount || data.snapshot?.amount;
-                        const delPayer = data.paid_by_name || data.snapshot?.paid_by_name;
-                        text = delAmount ? `deleted an expense of ${fmt.format(delAmount)}` : `deleted an expense${delPayer ? ` by ${delPayer}` : ''}`;
-                      }
-                      iconColor = 'text-red-500';
-                    }
-                    else if (activity.type === 'settlement_recorded') { Icon = CheckCircle2; text = `recorded a settlement`; iconColor = 'text-emerald-500'; }
-                    else if (activity.type === 'settlement_updated') { Icon = CheckCircle2; text = `updated a settlement`; iconColor = 'text-emerald-500'; }
-                    else if (activity.type === 'settlement_deleted') { Icon = Trash2; text = `deleted a settlement`; iconColor = 'text-red-500'; }
-                    else if (activity.type === 'group_created') { Icon = Users; text = `created the group`; }
-                    else if (activity.type === 'group_updated') { Icon = Settings; text = `updated group settings`; }
-                    else if (activity.type === 'member_joined') { Icon = UserPlus; text = `joined the group`; iconColor = 'text-emerald-500'; }
-                    else if (activity.type === 'member_left') { Icon = LogOut; text = `left the group`; iconColor = 'text-red-500'; }
-                    else if (activity.type === 'member_removed') { Icon = UserMinus; text = `removed ${data.target_user_name || 'a member'}`; iconColor = 'text-red-500'; }
-                    else if (activity.type === 'member_promoted') { Icon = Shield; text = `promoted ${data.target_user_name || 'a member'} to Admin`; iconColor = 'text-primary'; }
-                    else if (activity.type === 'member_demoted') { Icon = ShieldOff; text = `demoted ${data.target_user_name || 'a member'}`; iconColor = 'text-muted-foreground'; }
-
-                    if (activity.transaction_id && expenses) {
-                      const tx = expenses.find(e => e.id === activity.transaction_id);
-                      if (tx) {
-                        const isPayer = tx.paid_by === user?.id;
-                        const mySplit = tx.distribution?.splits?.find(s => s.user_id === user?.id);
-                        const otherSplit = tx.distribution?.splits?.find(s => s.user_id !== tx.paid_by);
-                        const myShareAmount = mySplit ? parseFloat(mySplit.amount) : 0;
-                        const totalAmount = parseFloat(tx.amount);
-                        
-                        if (tx.type === 'settlement') {
-                          const customPayer = isPayer ? 'You' : (tx.paid_by_name || data.paid_by_name || 'Someone');
-                          const customReceiver = otherSplit?.user_id === user?.id ? 'you' : (otherSplit?.user_name || 'someone');
-                          
-                          if (activity.type === 'settlement_recorded') {
-                             actionSubject = <><span className="font-bold">{customPayer}</span> paid {customReceiver} <span className="font-semibold">{fmt.format(totalAmount)}</span></>;
-                          }
-                          if (isPayer) {
-                            impactText = `You paid ${fmt.format(totalAmount)}`;
-                            impactColor = 'text-emerald-500';
-                          } else if (myShareAmount > 0) {
-                            impactText = `You received ${fmt.format(totalAmount)}`;
-                            impactColor = 'text-emerald-500';
-                          }
-                        } else {
-                          if (isPayer) {
-                            const iGetBack = totalAmount - myShareAmount;
-                            if (iGetBack > 0) {
-                              impactText = `You get back ${fmt.format(iGetBack)}`;
-                              impactColor = 'text-emerald-500';
-                            } else {
-                              impactText = `You paid ${fmt.format(totalAmount)}`;
-                              impactColor = 'text-muted-foreground';
-                            }
-                          } else if (myShareAmount > 0) {
-                            impactText = `You owe ${fmt.format(myShareAmount)}`;
-                            impactColor = 'text-orange-500';
-                          }
-                        }
-                      }
-                    }
-
-                    // Fallback: when the linked transaction was deleted but we have data in the activity log itself
-                    if (!actionSubject && (activity.type === 'settlement_recorded' || activity.type === 'settlement_deleted' || activity.type === 'settlement_updated')) {
-                      // Try to resolve names from the activity data payload
-                      const payerName = data.paid_by_name || actorName;
-                      const splits = data.distribution?.splits || data.snapshot?.distribution?.splits || [];
-                      
-                      // Resolve receiver: try user_name in splits, then check members, then scan all expenses
-                      let receiverName = 'someone';
-                      if (splits.length > 0) {
-                        const receiverSplit = splits[0];
-                        if (receiverSplit.user_name) {
-                          receiverName = receiverSplit.user_name;
-                        } else if (receiverSplit.user_id) {
-                          // 1. Check current group members
-                          if (members) {
-                            const memberMatch = members.find(m => m.user_id === receiverSplit.user_id);
-                            if (memberMatch?.user?.name) {
-                              receiverName = memberMatch.user.name;
-                            }
-                          }
-                          // 2. If still unresolved, scan all expenses for matching user_id
-                          if (receiverName === 'someone' && expenses) {
-                            for (const ex of expenses) {
-                              const match = ex.distribution?.splits?.find(s => s.user_id === receiverSplit.user_id);
-                              if (match?.user_name) { receiverName = match.user_name; break; }
-                            }
-                          }
-                          // 3. Check if it's the current user
-                          if (receiverSplit.user_id === user?.id) {
-                            receiverName = 'you';
-                          }
-                        }
-                      }
-
-                      if (activity.type === 'settlement_recorded') {
-                        const displayPayer = isSelf && (payerName === activity.user?.name || payerName === 'You') ? 'You' : payerName;
-                        const settlementAmt = data.amount || data.snapshot?.amount;
-                        actionSubject = <><span className="font-bold">{displayPayer}</span> paid {receiverName}{settlementAmt ? <span className="font-semibold"> {fmt.format(settlementAmt)}</span> : ''}</>;
-                      }
-                    }
-
-                    return (
-                      <div 
-                        key={activity.id} 
-                        onClick={hasDetail ? () => { setSelectedActivity(activity); setActivityDetailOpen(true); } : undefined}
-                        className={`neu-flat p-4 rounded-2xl flex items-center justify-between gap-4 transition-all ${hasDetail ? 'group cursor-pointer hover:bg-black/5 active:scale-[0.98]' : ''}`}
-                      >
-                        <div className="flex gap-4 items-center min-w-0 flex-1">
-                          <div className="flex flex-col items-center shrink-0 w-12 h-12 justify-center neu-inset rounded-xl">
-                            <Icon className={`h-5 w-5 ${iconColor}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-snug truncate">
-                              {actionSubject || <><span className="font-bold">{actorName}</span> {text}</>}
-                            </p>
-                            {impactText && (
-                              <p className={`text-sm tracking-tight font-medium ${impactColor} mt-0.5`}>
-                                {impactText}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-0.5 tracking-tight">
-                              {format(new Date(activity.created_at), 'MMM d, yyyy • h:mm a')}
-                            </p>
-                          </div>
-                        </div>
-                        {hasDetail && (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </div>
-                    );
-                  })}
-                  
-                  {hasMoreActivities && (
-                    <div className="flex justify-center pt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={loadMoreActivities} 
-                        disabled={loadingMoreActivities}
-                        className="rounded-full px-8 neu-flat hover:neu-inset active:scale-95 transition-all text-muted-foreground hover:text-foreground"
-                      >
-                        {loadingMoreActivities ? (
-                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</>
-                        ) : (
-                          'Load Older Activity'
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <ActivityTab 
+              activities={activities}
+              expenses={expenses}
+              members={members}
+              group={group}
+              currentUserId={user?.id}
+              hasMoreActivities={hasMoreActivities}
+              loadingMoreActivities={loadingMoreActivities}
+              onLoadMore={loadMoreActivities}
+              onActivityClick={(activity) => {
+                setSelectedActivity(activity);
+                setActivityDetailOpen(true);
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>

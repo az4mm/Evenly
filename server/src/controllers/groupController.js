@@ -239,18 +239,18 @@ export async function deleteGroup(req, res) {
         error: { code: 'FORBIDDEN', message: 'Only the group creator can delete this group' },
       });
     }
-    // TODO: Uncomment when balances feature is built
-    // const { rows: balanceRows } = await db.query(
-    //   'SELECT COUNT(*) FROM balances WHERE group_id = $1',
-    //   [req.params.id]
-    // );
-    //
-    // if (parseInt(balanceRows[0].count, 10) > 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: { code: 'VALIDATION_ERROR', message: 'All balances must be settled before deleting' },
-    //   });
-    // }
+    // Ensure all balances are settled before allowing group deletion
+    const { rows: balanceRows } = await db.query(
+      'SELECT COUNT(*) FROM balances WHERE group_id = $1',
+      [req.params.id]
+    );
+
+    if (parseInt(balanceRows[0].count, 10) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'All balances must be settled before deleting' },
+      });
+    }
 
     await db.query(
       'UPDATE groups SET is_deleted = true WHERE id = $1',
