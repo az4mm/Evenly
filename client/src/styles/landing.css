@@ -1,0 +1,478 @@
+/* ═══════════════════════════════════════
+   Landing Page — Scroll & Layout
+   ═══════════════════════════════════════ */
+
+.login-spline-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.login-scroll-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background: #0a0a0f;
+  pointer-events: none;
+  transition: opacity 0.1s linear;
+}
+
+.login-content-wrapper {
+  position: relative;
+  z-index: 10;
+  margin-top: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+/* ── Hero Section (Absolute to let clicks pass through to Spline) ── */
+.login-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through */
+}
+
+.login-scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  animation: hint-fade-in 0.8s ease-out 1s both;
+}
+
+@keyframes hint-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════
+   Landing Sections — Shared
+   ═══════════════════════════════════════ */
+
+.landing-section {
+  position: relative;
+  width: 100%;
+  padding: clamp(4rem, 10vh, 7rem) clamp(1.5rem, 5vw, 4rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-section-header {
+  text-align: center;
+  margin-bottom: clamp(2.5rem, 5vh, 4rem);
+  max-width: 36rem;
+}
+
+.landing-badge {
+  display: inline-block;
+  padding: 0.35rem 1rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1.25rem;
+}
+
+.landing-heading {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 1rem;
+}
+
+.landing-subheading {
+  font-size: clamp(0.875rem, 1.5vw, 1.05rem);
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.6;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════
+   Interactive App Preview (Browser Mockup)
+   ═══════════════════════════════════════ */
+
+.preview-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.preview-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+}
+
+.preview-tab:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.preview-tab--active {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.landing-browser-mockup {
+  width: 100%;
+  max-width: 64rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #0a0a0f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.browser-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.browser-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.browser-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.browser-url {
+  font-size: 0.75rem;
+  font-family: 'Geist Variable', sans-serif;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.35rem 3rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.browser-content {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9; /* Standard desktop aspect ratio */
+  background: #0a0a0f;
+  overflow: hidden;
+}
+
+.browser-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures screenshots aren't distorted */
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+
+.browser-img--active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* ═══════════════════════════════════════
+   Bento Feature Grid
+   ═══════════════════════════════════════ */
+
+.landing-features {
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 100%);
+}
+
+.landing-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 52rem;
+}
+
+@media (min-width: 640px) {
+  .landing-bento-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.bento-card {
+  padding: 1.75rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.bento-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+@media (min-width: 640px) {
+  .bento-card--large {
+    grid-column: span 2;
+  }
+}
+
+.bento-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.bento-icon--blue {
+  background: rgba(99, 131, 255, 0.12);
+  color: rgba(130, 160, 255, 0.9);
+}
+
+.bento-icon--emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: rgba(52, 211, 153, 0.9);
+}
+
+.bento-icon--purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: rgba(192, 132, 252, 0.9);
+}
+
+.bento-icon--amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: rgba(251, 191, 36, 0.9);
+}
+
+.bento-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+}
+
+.bento-card-desc {
+  font-size: 0.825rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+/* Bento mini demos */
+.bento-mini-demo {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bento-split-pill {
+  padding: 0.375rem 0.875rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bento-split-pill--active {
+  color: rgba(130, 160, 255, 0.95);
+  background: rgba(99, 131, 255, 0.12);
+  border-color: rgba(99, 131, 255, 0.25);
+}
+
+.bento-balance-demo {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bento-balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+}
+
+.bento-balance-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.bento-balance-value {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.bento-balance-value--positive { color: rgba(52, 211, 153, 0.9); }
+.bento-balance-value--negative { color: rgba(248, 113, 113, 0.9); }
+
+.bento-balance-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0.5rem 0;
+}
+
+.bento-timeline-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.bento-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.bento-timeline-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bento-dot--blue { background: rgba(130, 160, 255, 0.8); }
+.bento-dot--emerald { background: rgba(52, 211, 153, 0.8); }
+.bento-dot--amber { background: rgba(251, 191, 36, 0.8); }
+
+.bento-invite-demo {
+  margin-top: 0.25rem;
+}
+
+.bento-invite-bar {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+
+.bento-invite-url {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.bento-invite-code {
+  color: rgba(251, 191, 36, 0.9);
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════
+   CTA Section
+   ═══════════════════════════════════════ */
+
+.landing-cta {
+  padding-bottom: 2rem;
+}
+
+.landing-cta-card {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  max-width: 32rem;
+  width: 100%;
+}
+
+.landing-cta-icon {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 auto 1.25rem;
+}
+
+.landing-cta-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.75rem;
+}
+
+.landing-cta-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.landing-cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.landing-cta-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}

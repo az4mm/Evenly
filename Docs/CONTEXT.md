@@ -1040,3 +1040,47 @@ Each was themed with Neumorphic defaults:
 
 #### Files Modified
 - `client/src/index.css` — `.dark` CSS custom properties block
+
+---
+
+### 13.19 Glassmorphism Theme Integration
+
+**Date**: 2026-05-26
+
+**Objective**: Convert the legacy opaque neumorphic design into a fully immersive glassmorphic UI, allowing a persistent, theme-aware 3D background to show through all components.
+
+#### What was built
+
+1. **Global Background Image**
+   - Implemented `.app-bg-layer` in `AppLayout.jsx` with a fixed, theme-aware 3D robot background (`light_theme_ball.png` / `dark_theme_ball.png`).
+   - Placed at `z-index: -2` with a subtle `blur(5px)` to create depth.
+
+2. **Glassmorphic Overhauls (`index.css`)**
+   - Replaced opaque `var(--neu-bg)` references across the board.
+   - Updated core utility classes (`.neu-raised`, `.neu-inset`, `.neu-button`, `.neu-flat`) to use `--glass-bg` (a semi-transparent rgba color) and `backdrop-filter: blur(12px)`.
+   - Audited and updated all shadcn component overrides (Dropdowns, Dialogs, Selects, Toaster) to use glass effects, bypassing hardcoded Tailwind background colors with `!important`.
+
+3. **Landing Page Visual Fixes (`landing.css`, `LoginPage.jsx`)**
+   - Fixed a sharp horizontal cut-off in the 3D Spline scene caused by scaling transforms.
+   - Replaced solid backgrounds on scrollable areas with a smooth `40vh` linear gradient transition.
+   - Restored initial `body { background: var(--neu-bg); }` fallback to fix the stark white flash during the initial React load.
+   - Added a new 2-column "Smart Debt Simplification" promotional card to the Bento Grid.
+
+---
+
+### 13.20 Smart Debt Simplification Algorithm
+
+**Date**: 2026-05-26
+
+**Objective**: Implement an algorithmic feature that optimizes and reduces the total number of transactions required to settle up within a group.
+
+#### What was built
+
+1. **Backend Integration (`groupController.js`)**
+   - Added a `simplifyDebts` endpoint (`POST /api/groups/:id/simplify-debts`) (or similar implemented logic).
+   - Utilizes a greedy algorithm to match maximum creditors with maximum debtors, drastically minimizing total required transactions (e.g., turning a complex web of 6 debts into just 2 direct payments).
+   - Modifies existing balances to reflect the most efficient payment paths.
+
+2. **Frontend UI (`BalancesTab.jsx`, `GroupDetailPage.jsx`)**
+   - Built a sleek interface inside the Balances tab highlighting optimized settlements.
+   - Users can now visually see the most efficient path to settle group expenses, removing the headache of paying multiple different people.

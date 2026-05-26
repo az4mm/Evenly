@@ -1,6 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Scale } from 'lucide-react';
+import { Scale, Zap } from 'lucide-react';
 
 function getInitials(name) {
   if (!name) return '?';
@@ -11,6 +11,7 @@ export default function BalancesTab({
   balances,
   balanceSummary,
   balancesLoading,
+  simplifyDebtsMode,
   group,
   currentUserId,
   onSettleUp,
@@ -69,6 +70,22 @@ export default function BalancesTab({
       ) : (
         /* Balances List */
         <div className="space-y-3">
+          {simplifyDebtsMode && balances.length > 0 && (
+            <div className="neu-inset rounded-2xl p-3 flex items-start gap-3 bg-emerald-500/5 border border-emerald-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mt-0.5 rounded-full bg-emerald-500/20 p-1.5 text-emerald-600 dark:text-emerald-400">
+                <Zap className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                  Simplified Balances
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Debts have been optimized to minimize the number of transactions needed.
+                </p>
+              </div>
+            </div>
+          )}
+
           {balances.map((balance, index) => {
             const amInvolved = balance.from_user.id === currentUserId || balance.to_user.id === currentUserId;
             const iAmOwed = balance.to_user.id === currentUserId;

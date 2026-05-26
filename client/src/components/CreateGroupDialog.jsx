@@ -88,7 +88,7 @@ export default function CreateGroupDialog({ onGroupCreated, children }) {
         {trigger}
       </div>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="neu-raised-lg rounded-3xl border-none max-w-md w-[90vw]" style={{ background: 'var(--neu-bg)' }}>
+        <DialogContent className="neu-raised-lg rounded-3xl max-w-md w-[90vw]">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold tracking-tight">Create a new group</DialogTitle>

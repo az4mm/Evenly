@@ -127,6 +127,7 @@ export async function getGroup(req, res) {
 
     const group = rows[0];
     group.member_count = parseInt(group.member_count, 10);
+    group.simplify_debts = Boolean(group.simplify_debts);
 
     return res.json({
       success: true,
@@ -144,7 +145,7 @@ export async function getGroup(req, res) {
 // PATCH /api/groups/:id - Update group (admin only)
 export async function updateGroup(req, res) {
   try {
-    const { name, currency } = req.body;
+    const { name, currency, simplify_debts } = req.body;
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -185,6 +186,17 @@ export async function updateGroup(req, res) {
       values.push(currency.toUpperCase());
     }
 
+    if (simplify_debts !== undefined) {
+      if (typeof simplify_debts !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'simplify_debts must be a boolean' },
+        });
+      }
+      updates.push(`simplify_debts = $${paramIndex++}`);
+      values.push(simplify_debts);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
@@ -203,7 +215,8 @@ export async function updateGroup(req, res) {
        VALUES ($1, $2, 'group_updated', $3)`,
       [req.params.id, req.user.id, {
         ...(name !== undefined && { name: name.trim() }),
-        ...(currency !== undefined && { currency: currency.toUpperCase() })
+        ...(currency !== undefined && { currency: currency.toUpperCase() }),
+        ...(simplify_debts !== undefined && { simplify_debts })
       }]
     );
 

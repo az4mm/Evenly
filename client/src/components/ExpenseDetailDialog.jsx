@@ -65,7 +65,7 @@ export default function ExpenseDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="neu-raised-lg border-none rounded-3xl max-w-md w-[95vw] overflow-hidden p-0" style={{ background: 'var(--neu-bg)' }}>
+      <DialogContent className="neu-raised-lg rounded-3xl max-w-md w-[95vw] overflow-hidden p-0">
         {/* Header/Banner Section */}
         <div className="bg-primary/5 p-6 pb-4 relative">
           

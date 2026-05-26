@@ -398,8 +398,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="neu-raised-lg border-none rounded-3xl max-w-lg max-h-[90vh] overflow-y-auto"
-        style={{ background: 'var(--neu-bg)' }}
+        className="neu-raised-lg rounded-3xl max-w-lg max-h-[90vh] overflow-y-auto"
       >
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
@@ -483,7 +482,7 @@ export default function AddExpenseDialog({ open, onOpenChange, groupId, members,
                     <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 border-none rounded-3xl neu-raised-lg" align="end" style={{ background: 'var(--neu-bg)' }}>
+                <PopoverContent className="w-auto p-0 rounded-3xl neu-raised-lg" align="end">
                   <Calendar
                     mode="single"
                     selected={transactionDate}

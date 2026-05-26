@@ -57,8 +57,10 @@ function App() {
           theme={theme}
           toastOptions={{
             style: {
-              background: 'var(--neu-bg)',
-              border: 'none',
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid var(--glass-border)',
               boxShadow: '6px 6px 12px var(--neu-shadow-dark), -6px -6px 12px var(--neu-shadow-light)',
               color: 'var(--foreground)',
               borderRadius: '1rem',

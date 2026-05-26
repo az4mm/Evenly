@@ -164,7 +164,7 @@ export default function ActivityDetailDialog({ activity, members = [], expenses 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="neu-raised-lg border-none rounded-3xl w-[95vw] max-w-lg p-0 overflow-hidden"
-        style={{ background: 'var(--neu-bg)' }}
+        style={{}}
       >
         <div className="px-6 pt-6 pb-2">
           <DialogHeader>

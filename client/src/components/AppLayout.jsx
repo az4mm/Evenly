@@ -42,14 +42,18 @@ export default function AppLayout({ children }) {
   const profilePic = user?.user_metadata?.avatar_url;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--neu-bg)] text-foreground">
+    <div className="app-bg-layer flex h-screen overflow-hidden text-foreground">
 
       {/* ─── Desktop Sidebar (Hidden on mobile) ─── */}
       <aside
-        className={`hidden md:flex flex-col h-full border-r border-[var(--neu-shadow-dark)]/20 transition-all duration-300 ${
+        className={`hidden md:flex flex-col h-full border-r border-[var(--glass-border)] transition-all duration-300 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
-        style={{ background: 'var(--neu-bg)' }}
+        style={{ 
+          background: 'var(--glass-bg)', 
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)'
+        }}
       >
         <div className="p-4 h-full flex flex-col w-full overflow-hidden">
           {/* Logo & Toggle */}
@@ -93,7 +97,14 @@ export default function AppLayout({ children }) {
       <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden transition-all duration-300">
         
         {/* Topbar */}
-        <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 z-10" style={{ background: 'var(--neu-bg)' }}>
+        <header 
+          className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 z-10 border-b border-[var(--glass-border)]"
+          style={{ 
+            background: 'var(--glass-bg)', 
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)'
+          }}
+        >
           {/* Left: Mobile Logo */}
           <div className="flex items-center gap-3 md:hidden">
             <div className="neu-raised flex items-center justify-center w-10 h-10 rounded-xl shrink-0">
@@ -135,7 +146,7 @@ export default function AppLayout({ children }) {
                     {displayName.split(' ')[0]}
                   </span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 mt-2 neu-raised-lg border-none rounded-2xl p-2" style={{ background: 'var(--neu-bg)' }}>
+                <DropdownMenuContent align="end" className="w-56 mt-2 neu-raised-lg rounded-2xl p-2">
                   <div className="px-2 py-2 text-sm font-medium">
                     {displayName}
                     <p className="text-xs text-muted-foreground font-normal truncate mt-0.5">{user?.email}</p>
@@ -162,10 +173,11 @@ export default function AppLayout({ children }) {
 
       {/* ─── Mobile Bottom Nav (light neumorphic) ─── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 md:hidden z-50 border-t border-[var(--neu-shadow-dark)]/10"
+        className="fixed bottom-0 left-0 right-0 md:hidden z-50 border-t border-[var(--glass-border)]"
         style={{
-          background: 'var(--neu-bg)',
-          boxShadow: '0 -8px 20px var(--neu-shadow-dark)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       >
         <div className="flex items-center justify-around h-16 px-2">
@@ -203,7 +215,7 @@ export default function AppLayout({ children }) {
               </div>
               <span>Profile</span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" sideOffset={16} className="w-56 mb-2 neu-raised-lg border-none rounded-2xl p-2" style={{ background: 'var(--neu-bg)' }}>
+            <DropdownMenuContent align="end" side="top" sideOffset={16} className="w-56 mb-2 neu-raised-lg rounded-2xl p-2">
               <div className="px-2 py-2 text-sm font-medium">
                 {displayName}
                 <p className="text-xs text-muted-foreground font-normal truncate mt-0.5">{user?.email}</p>

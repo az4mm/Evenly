@@ -14,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGroup } from '@/services/groups';
 import { toast } from 'sonner';
+import { UserMinus, Trash2 } from 'lucide-react';
 
 const CURRENCIES = [
   { value: 'INR', label: 'INR - Indian Rupee' },
@@ -30,9 +32,19 @@ const CURRENCIES = [
   { value: 'AUD', label: 'AUD - Australian Dollar' },
 ];
 
-export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpdated }) {
+export default function EditGroupDialog({ 
+  group, 
+  open, 
+  onOpenChange, 
+  onGroupUpdated,
+  isAdmin = true,
+  isCreator = false,
+  onLeaveGroup,
+  onDeleteGroup
+}) {
   const [name, setName] = useState(group.name);
   const [currency, setCurrency] = useState(group.currency);
+  const [simplifyDebts, setSimplifyDebts] = useState(Boolean(group.simplify_debts));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,9 +52,10 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
     if (open) {
       setName(group.name);
       setCurrency(group.currency);
+      setSimplifyDebts(Boolean(group.simplify_debts));
       setError('');
     }
-  }, [open, group.name, group.currency]);
+  }, [open, group.name, group.currency, group.simplify_debts]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -56,6 +69,7 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
     const updates = {};
     if (trimmed !== group.name) updates.name = trimmed;
     if (currency !== group.currency) updates.currency = currency;
+    if (simplifyDebts !== Boolean(group.simplify_debts)) updates.simplify_debts = simplifyDebts;
 
     if (Object.keys(updates).length === 0) {
       onOpenChange(false);
@@ -87,12 +101,12 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="neu-raised-lg rounded-3xl border-none max-w-md w-[90vw]" style={{ background: 'var(--neu-bg)' }}>
+      <DialogContent className="neu-raised-lg rounded-3xl max-w-md w-[90vw] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold tracking-tight">Edit group</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Update the group name or currency. Currency can only be changed if no transactions exist.
+            <DialogTitle className="text-2xl font-bold tracking-tight">Group Settings</DialogTitle>
+            <DialogDescription className="sr-only">
+              Group settings and destructive actions
             </DialogDescription>
           </DialogHeader>
 
@@ -109,6 +123,7 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
                 maxLength={100}
                 placeholder="Ex: Trip to Paris"
                 className="h-12"
+                disabled={!isAdmin}
               />
             </div>
 
@@ -116,7 +131,7 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
               <Label htmlFor="edit-group-currency" className="text-sm font-medium ml-1">
                 Base Currency
               </Label>
-              <Select value={currency} onValueChange={setCurrency}>
+              <Select value={currency} onValueChange={setCurrency} disabled={!isAdmin}>
                 <SelectTrigger id="edit-group-currency" className="h-12">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
@@ -130,6 +145,57 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
               </Select>
             </div>
 
+            <div className="flex flex-row items-center justify-between rounded-2xl border border-border/50 p-4 neu-inset">
+              <div className="space-y-1">
+                <Label htmlFor="simplify-debts" className="text-base font-semibold">
+                  Simplify Debts
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Minimize the number of transactions required to settle up.
+                </p>
+              </div>
+              <Switch
+                id="simplify-debts"
+                checked={simplifyDebts}
+                onCheckedChange={setSimplifyDebts}
+                disabled={!isAdmin}
+              />
+            </div>
+
+            {/* Destructive Actions */}
+            <div className="space-y-3 pt-4 border-t border-border/50">
+              
+              {!isCreator && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onLeaveGroup?.();
+                  }}
+                >
+                  <UserMinus className="h-4 w-4 mr-2" />
+                  Leave Group
+                </Button>
+              )}
+
+              {isCreator && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onDeleteGroup?.();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Group
+                </Button>
+              )}
+            </div>
+
             {error && (
               <div className="neu-inset rounded-2xl p-4 bg-destructive/5 border border-destructive/10 animate-in fade-in zoom-in duration-200">
                 <p className="text-sm text-destructive font-medium">{error}</p>
@@ -137,15 +203,17 @@ export default function EditGroupDialog({ group, open, onOpenChange, onGroupUpda
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="h-12 px-8 font-semibold text-base w-full sm:w-auto"
-            >
-              {loading ? 'Saving Changes...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
+          {isAdmin && (
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-12 px-8 font-semibold text-base w-full sm:w-auto"
+              >
+                {loading ? 'Saving Changes...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          )}
         </form>
       </DialogContent>
     </Dialog>

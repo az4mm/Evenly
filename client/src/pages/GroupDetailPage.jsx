@@ -17,13 +17,7 @@ import ActivityTab from '@/components/group/ActivityTab';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,8 +34,7 @@ import {
   ArrowLeft,
   Copy,
   Check,
-  MoreVertical,
-  Pencil,
+  Settings,
   UserMinus,
   Trash2,
   Users,
@@ -88,6 +81,7 @@ export default function GroupDetailPage() {
   const [balances, setBalances] = useState([]);
   const [balanceSummary, setBalanceSummary] = useState(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
+  const [simplifyDebtsMode, setSimplifyDebtsMode] = useState(false);
 
   // Alert Dialog State
   const [alertOpen, setAlertOpen] = useState(false);
@@ -204,6 +198,7 @@ export default function GroupDetailPage() {
       if (balancesRes.success) {
         setBalances(balancesRes.data.balances);
         setBalanceSummary(balancesRes.data.summary);
+        setSimplifyDebtsMode(balancesRes.data.simplify_debts);
       }
     } catch (err) {
       console.error('Failed to load balances', err);
@@ -409,38 +404,14 @@ export default function GroupDetailPage() {
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className="text-3xl font-bold tracking-tight neu-text-raised">{group.name}</h1>
 
-              {/* Actions dropdown */}
-              {(isAdmin || !isCreator) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button variant="outline" className="h-8 w-8 p-0 border-none">
-                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="start">
-                    {isAdmin && (
-                      <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                        <Pencil className="h-4 w-4 mr-2" /> Edit Group
-                      </DropdownMenuItem>
-                    )}
-                    {!isCreator && (
-                      <DropdownMenuItem onClick={handleLeave}>
-                        <UserMinus className="h-4 w-4 mr-2" /> Leave Group
-                      </DropdownMenuItem>
-                    )}
-                    {isCreator && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={handleDeleteGroup}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete Group
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {/* Settings button */}
+              <Button 
+                variant="outline" 
+                className="h-8 w-8 p-0 border-none hover:bg-muted"
+                onClick={() => setEditDialogOpen(true)}
+              >
+                <Settings className="h-4 w-4 text-muted-foreground" />
+              </Button>
             </div>
 
             {/* Meta badges — neumorphic flat */}
@@ -461,27 +432,37 @@ export default function GroupDetailPage() {
           </div>
 
           {/* ─── Invite Code Box ─── */}
-          <div className="neu-raised flex items-center gap-2.5 px-4 py-3 rounded-xl">
-            <LinkIcon className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span
-              className="text-sm font-mono font-semibold text-primary cursor-pointer hover:text-primary/70 transition-colors select-all"
-              title="Click to copy code"
-              onClick={async () => {
-                await navigator.clipboard.writeText(group.invite_code);
-                setCodeCopied(true);
-                setTimeout(() => setCodeCopied(false), 2000);
-              }}
-            >
-              {codeCopied ? 'Copied!' : group.invite_code}
+          <div className="flex flex-col items-start sm:items-end gap-1.5 mt-2 sm:mt-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground pl-1 sm:pl-0 sm:pr-1">
+              Invite Code
             </span>
-            <Button
-              variant="outline"
-              className="h-7 w-7 p-0 border-none text-primary"
-              onClick={handleCopyInvite}
-              title="Copy invite link"
-            >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            </Button>
+            <div className="neu-raised flex items-center gap-3 px-4 py-2.5 rounded-xl">
+              <div 
+                className="flex flex-col cursor-pointer group"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(group.invite_code);
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }}
+                title="Click to copy just the code"
+              >
+                <span className="text-sm font-mono font-bold text-primary tracking-wide group-hover:text-primary/70 transition-colors">
+                  {codeCopied ? 'Copied!' : group.invite_code}
+                </span>
+                <span className="text-[9px] text-muted-foreground group-hover:text-primary/70 transition-colors">
+                  Click to copy code
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-primary/10 text-primary"
+                onClick={handleCopyInvite}
+                title="Copy full invite link"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -550,6 +531,7 @@ export default function GroupDetailPage() {
               balances={balances}
               balanceSummary={balanceSummary}
               balancesLoading={balancesLoading}
+              simplifyDebtsMode={simplifyDebtsMode}
               group={group}
               currentUserId={user?.id}
               onSettleUp={(balance) => {
@@ -579,13 +561,17 @@ export default function GroupDetailPage() {
         </Tabs>
       </div>
 
-      {/* Edit Group Dialog */}
-      {isAdmin && group && (
+      {/* Group Settings Dialog */}
+      {group && (
         <EditGroupDialog
-        group={group}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onGroupUpdated={(updated) => setGroup(updated)}
+          group={group}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onGroupUpdated={(updated) => setGroup(prev => ({ ...prev, ...updated }))}
+          isAdmin={isAdmin}
+          isCreator={isCreator}
+          onLeaveGroup={handleLeave}
+          onDeleteGroup={handleDeleteGroup}
         />
       )}
 
@@ -649,7 +635,7 @@ export default function GroupDetailPage() {
 
       {/* Confirmation Alert Dialog */}
       <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent className="neu-raised-lg border-none rounded-3xl" style={{ background: 'var(--neu-bg)' }}>
+        <AlertDialogContent className="neu-raised-lg rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl">{alertConfig.title}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground text-base">
@@ -677,7 +663,7 @@ export default function GroupDetailPage() {
 
       {/* Warning Alert Dialog */}
       <AlertDialog open={warningOpen} onOpenChange={setWarningOpen}>
-        <AlertDialogContent className="neu-raised-lg border-none rounded-3xl" style={{ background: 'var(--neu-bg)' }}>
+        <AlertDialogContent className="neu-raised-lg rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl">{warningConfig.title}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground text-base">

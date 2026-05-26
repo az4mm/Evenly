@@ -1,4 +1,5 @@
 import pool from '../db/database.js';
+import { simplifyBalances } from '../utils/simplifyDebts.js';
 
 export const getUserOverallBalances = async (req, res) => {
   try {
@@ -64,6 +65,13 @@ export const getGroupBalances = async (req, res) => {
       [groupId]
     );
 
+    // Check if the group has simplify_debts enabled
+    const groupResult = await pool.query(
+      'SELECT simplify_debts FROM groups WHERE id = $1',
+      [groupId]
+    );
+    const simplifyDebts = groupResult.rows[0]?.simplify_debts || false;
+
     const balances = result.rows.map(row => ({
       amount: parseFloat(row.amount),
       updated_at: row.updated_at,
@@ -96,6 +104,12 @@ export const getGroupBalances = async (req, res) => {
 
     const netGroupBalance = userIsOwed - userOwes;
 
+    // Only apply simplify algorithm to the display balances
+    let displayBalances = balances;
+    if (simplifyDebts) {
+      displayBalances = simplifyBalances(balances);
+    }
+
     res.json({
       success: true,
       data: {
@@ -104,7 +118,8 @@ export const getGroupBalances = async (req, res) => {
           user_is_owed: userIsOwed,
           net_balance: netGroupBalance
         },
-        balances: balances
+        simplify_debts: simplifyDebts,
+        balances: displayBalances
       },
     });
   } catch (error) {
