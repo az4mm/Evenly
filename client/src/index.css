@@ -57,9 +57,9 @@
 
     /* App background image */
     --app-bg-image: url('/light_theme_ball.png');
-    --app-bg-overlay: rgba(221, 225, 231, 0.72);
-    --glass-bg: rgba(221, 225, 231, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.35);
+    --app-bg-overlay: rgba(221, 225, 231, 0.85);
+    --glass-bg: rgba(221, 225, 231, 0.80);
+    --glass-border: rgba(255, 255, 255, 0.40);
 }
 
 .dark {
@@ -107,9 +107,9 @@
 
     /* App background image */
     --app-bg-image: url('/dark_theme_ball.png');
-    --app-bg-overlay: rgba(20, 20, 25, 0.70);
-    --glass-bg: rgba(20, 20, 25, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.06);
+    --app-bg-overlay: rgba(10, 10, 15, 0.85);
+    --glass-bg: rgba(20, 20, 25, 0.80);
+    --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
