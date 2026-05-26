@@ -8,11 +8,13 @@
   z-index: 1;
 }
 
-/* Enlarge the 3D robot scene on mobile to ensure it fills the space better */
+/* Enlarge the 3D robot scene on mobile to ensure it fills the space better without losing quality */
 @media (max-width: 768px) {
   .login-spline-bg {
-    transform: scale(1.6);
-    transform-origin: center center;
+    width: 160vw;
+    height: 160vh;
+    left: -30vw;
+    top: -30vh;
   }
 }
 
