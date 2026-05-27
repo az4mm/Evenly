@@ -446,9 +446,9 @@
 }
 
 .login-brand-logo {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.875rem;
+  width: clamp(2.75rem, 8vw, 3.5rem);
+  height: clamp(2.75rem, 8vw, 3.5rem);
+  border-radius: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -466,6 +466,21 @@
   line-height: 1;
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+}
+
+.login-brand-iframe-wrapper {
+  width: 450px;
+  max-width: 90vw;
+  height: clamp(120px, 25vw, 200px);
+  overflow: hidden;
+  border-radius: 1rem;
+  /* Spline iframe embeds have a solid black background.
+     mix-blend-mode: screen can sometimes help hide it if the text is bright, 
+     but it might look a bit washed out depending on the 3D scene colors. */
+  mix-blend-mode: screen; 
+  /* Feather the edges to make it submerge perfectly into the background */
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
 }
 
 .login-brand-tagline {

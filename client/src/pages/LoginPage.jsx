@@ -142,9 +142,17 @@ export default function LoginPage() {
       <div className="login-hero">
         <div className={`login-brand ${sceneLoaded ? 'login-brand--visible' : ''}`}>
           <div className="login-brand-logo">
-            <Scissors className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Scissors className="h-6 w-6 sm:h-8 sm:w-8" />
           </div>
-          <h1 className="login-brand-title">Evenly</h1>
+          <div className="login-brand-iframe-wrapper">
+            <iframe 
+              src="https://my.spline.design/helloliquidtext-Cxut4H5ycdCtFfbaZNwhM1ug-b3g/" 
+              frameBorder="0" 
+              width="100%" 
+              height="100%"
+              title="Evenly 3D Liquid Text"
+            ></iframe>
+          </div>
           <p className="login-brand-tagline">
             your friends owe you. we'll prove it.
           </p>
