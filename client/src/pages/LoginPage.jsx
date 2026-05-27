@@ -141,9 +141,7 @@ export default function LoginPage() {
       {/* ── Fixed Hero Elements (Brand, Hint) ── */}
       <div className="login-hero">
         <div className={`login-brand ${sceneLoaded ? 'login-brand--visible' : ''}`}>
-          <div className="login-brand-logo">
-            <Scissors className="h-6 w-6 sm:h-8 sm:w-8" />
-          </div>
+          {/* Removed Scissors logo to uncrowd the header, using the 3D text as the primary brand */}
           <div className="login-brand-iframe-wrapper">
             <iframe 
               src="https://my.spline.design/helloliquidtext-Cxut4H5ycdCtFfbaZNwhM1ug-b3g/" 
