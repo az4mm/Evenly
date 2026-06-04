@@ -1,7 +1,6 @@
 <div align="center">
   
 # ✂️ Evenly
-**Your friends owe you. We'll prove it.**
 
 </div>
 
