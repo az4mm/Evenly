@@ -1,4 +1,5 @@
 import pool from '../db/database.js';
+import { notifyGroupMembers } from '../services/notificationService.js';
 
 // ──────────────────────────────────────────────────
 //  BALANCE HELPERS  (Application-Level Approach)
@@ -281,6 +282,22 @@ export async function addExpense(req, res) {
     );
 
     await client.query('COMMIT');
+
+    // Fire-and-forget email notification (not awaited — never blocks the response)
+    notifyGroupMembers({
+      groupId,
+      excludeUserId: userId,
+      activityType: isSettlement ? 'settlement_recorded' : 'expense_added',
+      data: {
+        description: description || null,
+        amount: parseFloat(amount),
+        paid_by_name: payer.name,
+        category: category || 'Others',
+        distribution: finalDistribution,
+      },
+      actorName: req.user.name,
+    });
+
     res.status(201).json({ success: true, data: transaction });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -540,6 +557,22 @@ export async function deleteExpense(req, res) {
     await client.query('DELETE FROM transactions WHERE id = $1', [expenseId]);
 
     await client.query('COMMIT');
+
+    // Fire-and-forget email notification (not awaited — never blocks the response)
+    notifyGroupMembers({
+      groupId,
+      excludeUserId: userId,
+      activityType: oldTx.type === 'settlement' ? 'settlement_deleted' : 'expense_deleted',
+      data: {
+        description: oldTx.description,
+        amount: parseFloat(oldTx.amount),
+        paid_by_name: payer.name,
+        category: oldTx.category,
+        distribution: oldTx.distribution,
+      },
+      actorName: req.user.name,
+    });
+
     res.json({ success: true, data: { message: 'Expense deleted' } });
   } catch (err) {
     await client.query('ROLLBACK');

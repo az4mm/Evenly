@@ -1,5 +1,6 @@
 import db from '../db/database.js';
 import { generateInviteCode } from '../utils/inviteCode.js';
+import { notifyGroupMembers } from '../services/notificationService.js';
 
 // POST /api/groups - Create a new group
 export async function createGroup(req, res) {
@@ -131,7 +132,7 @@ export async function getGroup(req, res) {
 
     return res.json({
       success: true,
-      data: { ...group, my_role: req.membership.role },
+      data: { ...group, my_role: req.membership.role, email_notifications: req.membership.email_notifications !== false },
     });
   } catch (err) {
     console.error('Error in GET /groups/:id:', err);
@@ -397,6 +398,15 @@ export async function joinGroup(req, res) {
       [group.id, req.user.id, { group_name: group.name }]
     );
 
+    // Fire-and-forget email notification
+    notifyGroupMembers({
+      groupId: group.id,
+      excludeUserId: req.user.id,
+      activityType: 'member_joined',
+      data: { group_name: group.name },
+      actorName: req.user.name,
+    });
+
     return res.status(201).json({
       success: true,
       data: { ...group, my_role: 'member' },
@@ -565,6 +575,36 @@ export async function updateMemberRole(req, res) {
     return res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to update member role' },
+    });
+  }
+}
+
+// PATCH /api/groups/:id/notification-preferences - Toggle email notifications for a group
+export async function updateNotificationPreference(req, res) {
+  try {
+    const { email_notifications } = req.body;
+
+    if (typeof email_notifications !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'email_notifications must be a boolean' },
+      });
+    }
+
+    await db.query(
+      'UPDATE user_groups SET email_notifications = $1 WHERE user_id = $2 AND group_id = $3',
+      [email_notifications, req.user.id, req.params.id]
+    );
+
+    return res.json({
+      success: true,
+      data: { email_notifications },
+    });
+  } catch (err) {
+    console.error('Error in PATCH /groups/:id/notification-preferences:', err);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Failed to update notification preference' },
     });
   }
 }

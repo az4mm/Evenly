@@ -12,6 +12,7 @@ import {
   joinGroup,
   removeMember,
   updateMemberRole,
+  updateNotificationPreference,
 } from '../controllers/groupController.js';
 import {
   addExpense,
@@ -38,6 +39,9 @@ router.delete('/:id', authenticate, requireGroupAdmin, deleteGroup);
 router.get('/:id/members', authenticate, requireGroupMember, listMembers);
 router.delete('/:id/members/:userId', authenticate, requireGroupMember, removeMember);
 router.patch('/:id/members/:userId', authenticate, requireGroupAdmin, updateMemberRole);
+
+// Notification preferences
+router.patch('/:id/notification-preferences', authenticate, requireGroupMember, updateNotificationPreference);
 
 // Balances
 router.get('/:id/balances', authenticate, requireGroupMember, getGroupBalances);
