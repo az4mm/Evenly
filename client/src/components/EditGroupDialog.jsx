@@ -18,9 +18,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGroup } from '@/services/groups';
+import { updateGroup, updateNotificationPreference } from '@/services/groups';
 import { toast } from 'sonner';
-import { UserMinus, Trash2 } from 'lucide-react';
+import { UserMinus, Trash2, Bell, BellOff } from 'lucide-react';
 
 const CURRENCIES = [
   { value: 'INR', label: 'INR - Indian Rupee' },
@@ -47,12 +47,15 @@ export default function EditGroupDialog({
   const [simplifyDebts, setSimplifyDebts] = useState(Boolean(group.simplify_debts));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailNotifications, setEmailNotifications] = useState(group.email_notifications !== false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(group.name);
       setCurrency(group.currency);
       setSimplifyDebts(Boolean(group.simplify_debts));
+      setEmailNotifications(group.email_notifications !== false);
       setError('');
     }
   }, [open, group.name, group.currency, group.simplify_debts]);
@@ -159,6 +162,42 @@ export default function EditGroupDialog({
                 checked={simplifyDebts}
                 onCheckedChange={setSimplifyDebts}
                 disabled={!isAdmin}
+              />
+            </div>
+
+            {/* Email Notifications — personal preference, fires immediately */}
+            <div className="flex flex-row items-center justify-between rounded-2xl border border-border/50 p-4 neu-inset">
+              <div className="space-y-1">
+                <Label htmlFor="email-notifications" className="text-base font-semibold flex items-center gap-2">
+                  {emailNotifications ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4 text-muted-foreground" />}
+                  Email Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Get emailed when expenses are added, deleted, or members join.
+                </p>
+              </div>
+              <Switch
+                id="email-notifications"
+                checked={emailNotifications}
+                disabled={emailLoading}
+                onCheckedChange={async (checked) => {
+                  setEmailLoading(true);
+                  setEmailNotifications(checked);
+                  try {
+                    const res = await updateNotificationPreference(group.id, checked);
+                    if (res.success) {
+                      toast.success(checked ? 'Email notifications enabled' : 'Email notifications disabled');
+                    } else {
+                      setEmailNotifications(!checked);
+                      toast.error(res.error?.message || 'Failed to update preference');
+                    }
+                  } catch {
+                    setEmailNotifications(!checked);
+                    toast.error('Failed to update preference');
+                  } finally {
+                    setEmailLoading(false);
+                  }
+                }}
               />
             </div>
 
