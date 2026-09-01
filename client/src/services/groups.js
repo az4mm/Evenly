@@ -97,3 +97,12 @@ export async function getActivityLogs(groupId, page = 1) {
   });
   return res.json();
 }
+
+export async function updateNotificationPreference(groupId, enabled) {
+  const res = await fetch(`${API_URL}/api/groups/${groupId}/notification-preferences`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify({ email_notifications: enabled }),
+  });
+  return res.json();
+}
